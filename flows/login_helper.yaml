@@ -1,0 +1,18 @@
+appId: com.newroztech.gamewallet
+---
+- tapOn:
+    text: "Your Phone number here"
+- eraseText: 10
+- inputText: "${Mobile_Number}"
+- tapOn:
+    text: "Password"
+- inputText: "${Password}"
+- tapOn:
+    id: customEditTextEndImageView
+    index: 1
+- assertVisible: Forgot Password
+
+- assertVisible: You don't have account yet?
+- assertVisible: CREATE NEW ACCOUNT
+- tapOn: LOGIN
+- waitForAnimationToEnd

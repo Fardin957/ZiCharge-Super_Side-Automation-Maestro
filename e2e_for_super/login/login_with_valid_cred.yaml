@@ -1,0 +1,42 @@
+appId: com.newroztech.gamewallet
+tags:
+  - smoke
+  - regression
+---
+- launchApp
+
+
+
+#- assertVisible: Your phone number here
+#- tapOn:
+#  id: customEditText
+
+#- eraseText: 10
+
+#- inputText: "${Mobile_Number}"
+
+#- assertVisible: Password
+#- tapOn:
+#   id: customEditTextView
+
+#- inputText: "${Password}"
+#- tapOn:
+#   id: customEditTextEndImageView
+#  index: 1
+- runFlow:
+    file: ../../flows/login_helper.yaml
+    env:
+      MOBILE_NUMBER: "${Mobile_Number}"
+      PASSWORD: "${Password}"
+#- assertVisible: Forgot Password
+
+#- assertVisible: You don't have account yet?
+#- assertVisible: CREATE NEW ACCOUNT
+
+#- runFlow:
+#    when:
+#      visible: LOGIN
+#    commands:
+#      - tapOn: LOGIN
+- runFlow:
+    file: ../../flows/teardown.yaml
