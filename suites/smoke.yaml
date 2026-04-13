@@ -1,4 +1,10 @@
 appId: com.newroztech.gamewallet
 ---
-- launchApp:
-    clearState: true
+
+
+# Login
+- runFlow: ../e2e_for_super/Login/login_with_valid_cred.yaml
+
+- runFlow: ../e2e_for_super/home/home_test_case.yaml
+
+

@@ -1,0 +1,148 @@
+appId: com.newroztech.gamewallet
+tags:
+  - smoke
+  - regression
+  - P0
+  - Functional
+---
+#Runflow use for the first login file the this file is exceuted
+- launchApp
+
+#Using ENV LOgin the app
+- runFlow:
+    file: ../../flows/login_helper.yaml
+    env:
+      MOBILE_NUMBER: "${Mobile_Number}"
+      PASSWORD: "${Password}"
+- assertVisible:
+    id: bannerImage
+- tapOn:
+    id: closeBtn
+- tapOn: open_drawer
+- tapOn: SUPER ZICHARGE
+- runFlow:
+    when:
+      visible: PROCEED
+    commands:
+      - assertVisible: PROCEED
+      - tapOn: PROCEED
+- runFlow:
+    when:
+      visible: Home
+    commands:
+      - assertVisible: Home
+- tapOn:
+    id: adsLayout
+- tapOn:
+    id: adsSellLayout
+- assertVisible: My Ads
+- assertVisible: How to create Ad
+
+- assertVisible: Sell
+- assertVisible: All
+- assertVisible:
+    id: customEditTextEndImageView
+- assertVisible:
+    id: tvTimeDate
+- assertVisible:
+    id: tvCurrentStatus
+- assertVisible: Fee
+- assertVisible:
+    id: tvFeeAmount
+- assertVisible: Payment window
+- assertVisible:
+    id: tvPaymentWindowTime
+- assertVisible:
+    id: tvPaymentMethod
+- assertVisible:
+    id: tvTotalAmount
+- tapOn:
+    id: customEditText
+- assertVisible: SELECT
+- assertVisible: All
+- assertVisible: Active
+- assertVisible: Hold
+- assertVisible: Processing
+- assertVisible: Payment Request
+- assertVisible: Dispute Request
+- tapOn: Active
+- assertVisible: Active
+- runFlow:
+    when:
+      visible: No Ads data found
+    commands:
+      - assertVisible: No Ads data found
+      - assertVisible: You haven't added anything yet!
+- assertVisible:
+    id: fabAddItem
+- tapOn:
+    id: fabAddItem
+- assertVisible:
+    id: appLogo
+- assertVisible:
+    id: notificationIcon
+- assertVisible: Create Sell Ads
+- assertVisible: Buy balance by creating a sell add for ZiCharge personal users to release.
+- assertVisible: Enter ads amount
+- tapOn:
+    id: customEditText
+    index: 1
+- inputText: "500"
+- hideKeyboard
+- assertVisible: Enter fee amount (as default 0)
+- assertVisible: Enter fee amount
+- tapOn: Enter fee amount
+- inputText: "10"
+- hideKeyboard
+- assertVisible: Payment Methods
+- assertVisible: Select
+- assertVisible:
+    id: customEditTextEndImageView
+    index: 1
+- tapOn: Select
+- assertVisible: SELECT
+- assertVisible: Please choose
+- assertVisible:
+    id: checkBox
+- assertVisible: Rocket - (827288282828282)
+- tapOn: Rocket - (827288282828282)
+
+
+- runFlow:
+    when:
+      visible: SUBMIT
+    commands:
+      - assertVisible: SUBMIT
+      - tapOn: SUBMIT
+- runFlow:
+    when:
+      visible: CREATE
+    commands:
+      - assertVisible: CREATE
+      - tapOn: CREATE
+- assertVisible:
+    id: dialogImage
+- assertVisible: Congratulations!
+- assertVisible: |-
+    Your ad has been created
+    successfully.
+- tapOn: OK
+- assertVisible:
+    id: tvActive
+- assertVisible: Cancel Ad
+- tapOn: Cancel Ad
+- assertVisible:
+    id: dialogImage
+- assertVisible: Cancel This Ad?
+- assertVisible: This ad will be canceled and can not be activated again
+- runFlow:
+    when:
+      visible: CONFIRM
+    commands:
+      - assertVisible: CONFIRM
+      - tapOn: CONFIRM
+- assertVisible: Cancelled
+- runFlow:
+    file: ../../flows/teardown.yaml
+
+

@@ -1,0 +1,152 @@
+appId: com.newroztech.gamewallet
+tags:
+  - smoke
+  - regression
+  - P0
+  - Functional
+---
+#Runflow use for the first login file the this file is exceuted
+- launchApp
+
+#Using ENV LOgin the app
+- runFlow:
+    file: ../../flows/login_helper.yaml
+    env:
+      MOBILE_NUMBER: "${Mobile_Number}"
+      PASSWORD: "${Password}"
+- assertVisible:
+    id: bannerImage
+- tapOn:
+    id: closeBtn
+- tapOn: open_drawer
+- tapOn: SUPER ZICHARGE
+- runFlow:
+    when:
+      visible: PROCEED
+    commands:
+      - assertVisible: PROCEED
+      - tapOn: PROCEED
+- runFlow:
+    when:
+      visible: Home
+    commands:
+      - assertVisible: Home
+- tapOn:
+    id: adsLayout
+- assertVisible: BACK
+- assertVisible:
+    id: appLogo
+- assertVisible:
+    id: notificationIcon
+- assertVisible: My Ads
+- assertVisible: How to create Ad
+- assertVisible: Buy
+- assertVisible: All
+- assertVisible:
+    id: customEditTextEndImageView
+- assertVisible:
+    id: fabAddItem
+- assertVisible:
+    id: tvTimeDate
+- assertVisible:
+    id: tvCurrentStatus
+- assertVisible: Fee
+- assertVisible:
+    id: tvFeeAmount
+- assertVisible: Payment window
+- assertVisible:
+    id: tvPaymentWindowTime
+- assertVisible:
+    id: tvPaymentMethod
+- assertVisible:
+    id: tvTotalAmount
+# Scroll down twice
+- scroll
+- scroll
+
+# Scroll up once (fixed)
+- swipe:
+    start: 50%,30%
+    end: 50%,80%
+- tapOn:
+    id: customEditText
+- assertVisible:
+    id: appLogo
+- assertVisible: SELECT
+- assertVisible: All
+- assertVisible: Active
+- assertVisible: Hold
+- assertVisible: Processing
+- assertVisible: Payment Request
+- assertVisible: Dispute Request
+- tapOn: Dispute Request
+- tapOn:
+    id: fabAddItem
+- assertVisible: Create Buy Ads
+- assertVisible: Sell balance by creating a buy add for ZiCharge personal users to purchase.
+- assertVisible: Enter ads amount
+- assertVisible:
+    id: customEditTextStartLayout
+- tapOn:
+    id: customEditText
+    index: 1
+- inputText: "1000"
+- hideKeyboard
+- assertVisible: Enter fee amount (as default 0)
+- tapOn: Enter fee amount
+- inputText: "10"
+- hideKeyboard
+- assertVisible: Payment Methods
+- assertVisible: Select
+- tapOn: Select
+- assertVisible:
+    id: appLogo
+- assertVisible: SELECT
+- assertVisible: Please choose
+- assertVisible: Rocket - (827288282828282)
+- assertVisible:
+    id: checkBox
+
+- tapOn: Rocket - (827288282828282)
+- runFlow:
+    when:
+      visible: SUBMIT
+    commands:
+      - assertVisible: SUBMIT
+      - tapOn: SUBMIT
+- assertVisible: Total Ads Amount
+- assertVisible: 1,010 IQD
+- runFlow:
+    when:
+      visible: CREATE
+    commands:
+      - assertVisible: CREATE
+      - tapOn: CREATE
+- assertVisible:
+    id: dialogImage
+- assertVisible: Congratulations!
+- assertVisible: |-
+    Your ad has been created
+    successfully.
+- runFlow:
+    when:
+      visible: OK
+    commands:
+      - assertVisible: OK
+      - tapOn: OK
+- assertVisible: Active
+- assertVisible: Cancel Ad
+- tapOn: Cancel Ad
+- assertVisible:
+    id: dialogImage
+- assertVisible: Cancel This Ad?
+- assertVisible: This ad will be canceled and can not be activated again
+- runFlow:
+    when:
+      visible: CONFIRM
+    commands:
+      - assertVisible: CONFIRM
+      - tapOn: CONFIRM
+- assertVisible: Cancelled
+- runFlow:
+    file: ../../flows/teardown.yaml
