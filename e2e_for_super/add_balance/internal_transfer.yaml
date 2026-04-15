@@ -1,0 +1,112 @@
+appId: com.newroztech.gamewallet
+tags:
+  - smoke
+  - regression
+  - P0
+  - Functional
+---
+#Runflow use for the first login file the this file is exceuted
+- launchApp
+
+#Using ENV LOgin the app
+- runFlow:
+    file: ../../flows/login_helper.yaml
+    env:
+      MOBILE_NUMBER: "${Mobile_Number}"
+      PASSWORD: "${Password}"
+- assertVisible:
+    id: bannerImage
+- tapOn:
+    id: closeBtn
+- tapOn: open_drawer
+- tapOn: SUPER ZICHARGE
+- runFlow:
+    when:
+      visible: PROCEED
+    commands:
+      - assertVisible: PROCEED
+      - tapOn: PROCEED
+- runFlow:
+    when:
+      visible: Home
+    commands:
+      - assertVisible: Home
+- assertVisible: BACK
+- assertVisible:
+    id: appLogo
+- assertVisible:
+    id: notificationIcon
+- assertVisible: Add Balance
+
+- tapOn:
+    id: addBalanceLayout
+
+- assertVisible:
+    id: getwayIconImageView
+- assertVisible: Internal Transfer
+- assertVisible: Balance can be added from your personal account to Super Zicharge.
+- assertVisible: Internal Transfer Mobile Number
+- assertVisible: "+9641617539764"
+- tapOn:
+    id: customEditText
+- inputText: "500"
+- assertVisible:
+    id: tvAvailableBalance
+- assertVisible: Enter Amount
+- assertVisible: Amount to add (Super ZiCharge)
+- tapOn: Amount to add (Super ZiCharge)
+- inputText: "500"
+- hideKeyboard
+- runFlow:
+    when:
+      visible: DEPOSIT
+    commands:
+      - assertVisible: DEPOSIT
+      - tapOn: DEPOSIT
+- assertVisible:
+    id: dialogCardView
+- assertVisible: Send Confirmation
+- assertVisible: Your deposit request of IQD 500 is processing.
+- assertVisible: CANCEL
+- runFlow:
+    when:
+      visible: CANCEL
+    commands:
+      - assertVisible: CANCEL
+      - tapOn: CANCEL
+- runFlow:
+    when:
+      visible: DEPOSIT
+    commands:
+      - assertVisible: DEPOSIT
+      - tapOn: DEPOSIT
+- assertVisible: YES, CONFIRM
+- runFlow:
+    when:
+      visible: YES, CONFIRM
+    commands:
+      - assertVisible: YES, CONFIRM
+      - tapOn: YES, CONFIRM
+
+- runFlow:
+    file: ../../flows/enter_your_pin.yaml
+- assertVisible:
+    id: appLogo
+- assertVisible:
+    id: statusIcon
+- assertVisible: Congratulations!
+- assertVisible: Your balance has been successfully added to your account.
+- takeScreenshot: "../../screenshots/Internal money transfer balance successfull"
+- runFlow:
+    when:
+      visible: GO HOME
+    commands:
+      - assertVisible: GO HOME
+      - tapOn: GO HOME
+- runFlow:
+    when:
+      visible: HOME
+    commands:
+      - assertVisible: HOME
+- runFlow:
+    file: ../../flows/teardown.yaml

@@ -1,0 +1,15 @@
+appId: com.newroztech.gamewallet
+---
+- assertVisible:
+    id: appLogo
+- assertVisible: ENTER YOUR ACCOUNT PIN
+- assertVisible: You need to enter your account PIN number here to confirm the transaction process.
+- assertVisible: Enter PIN
+- tapOn: Enter PIN
+- inputText: "1245"
+- runFlow:
+    when:
+      visible: CONFIRM
+    commands:
+      - assertVisible: CONFIRM
+      - tapOn: CONFIRM
