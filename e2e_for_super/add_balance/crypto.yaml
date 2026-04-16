@@ -31,4 +31,90 @@ tags:
       visible: Home
     commands:
       - assertVisible: Home
+- tapOn:
+    id: "addBalanceLayout"
+- tapOn:
+    id: "adapterLayout"
+- assertVisible:
+    id: "getwayIconImageView"
+- assertVisible: "Crypto"
+- tapOn: "Crypto"
+- assertVisible:
+    id: "customEditTextStartImageView"
 
+- assertVisible: "Currency"
+- assertVisible:
+    id: "customEditTextEndImageView"
+- tapOn: "Currency"
+- assertVisible: "CURRENCY LIST"
+- assertVisible: "Please select cryptocurrencies from below list."
+- assertVisible:
+    id: "customEditTextStartImageView"
+- assertVisible: "Search"
+- runScript:
+    file: random.js
+    env:
+      currencies: "BTC,ETH,USDT,TRX,BNB,BUSD,BNBB,USDB,DAI"
+
+- scrollUntilVisible:
+    element:
+      text: ${output.selectedCurrency}
+    direction: DOWN
+
+- tapOn:
+    text: ${output.selectedCurrency}
+- assertVisible:
+    id: "customEditTextStartImageView"
+- assertVisible: "Please select Network"
+
+- assertVisible: "Network"
+- tapOn: "Network"
+
+- assertVisible:
+    id: "content"
+- tapOn:
+    id: "content"
+
+
+- assertVisible:
+    id: "customEditTextStartLayout"
+- assertVisible: "Amount"
+- assertVisible: "Please enter amount in IQD to Deposit"
+- tapOn: "Amount"
+- inputText: "250"
+- hideKeyboard
+- runFlow:
+    when:
+      visible: DEPOSIT
+    commands:
+      - assertVisible: DEPOSIT
+      - tapOn: DEPOSIT
+- assertVisible: "IQD Amount"
+- assertVisible: "250"
+- assertVisible: "Deposit Crypto Balance:"
+- assertVisible: "Please transfer Crypto Balance to below address"
+- assertVisible: "Receiver wallet address"
+- assertVisible:
+    id: "receiverWalletAddressLayout"
+- assertVisible: "COPY"
+- tapOn: "COPY"
+- assertVisible: "* Click on the copy button if you unable to scan QR code"
+- assertVisible: "Address is valid for 60 minutes"
+- assertVisible:
+    id: "qrCodeImage"
+- assertVisible: "QR Code"
+- assertVisible:
+    point: 9%,60%
+- assertVisible:
+    id: "qrCode"
+
+- runFlow:
+    when:
+      visible: REQUEST HISTORY
+    commands:
+      - assertVisible: REQUEST HISTORY
+      - tapOn: REQUEST HISTORY
+- assertVisible:
+    point: 0%,21%
+- runFlow:
+    file: ../../flows/teardown.yaml
