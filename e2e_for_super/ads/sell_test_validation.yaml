@@ -84,21 +84,19 @@ tags:
 - assertVisible: Create Sell Ads
 - assertVisible: Buy balance by creating a sell add for ZiCharge personal users to release.
 - assertVisible: Enter ads amount
-- tapOn:
-    id: customEditText
-    index: 1
+- tapOn: "Enter amount"
+
 - inputText: "500"
 - hideKeyboard
-- assertVisible: Enter fee amount (as default 0)
+- assertVisible: "Enter fee amount (as default 0)"
+
 - assertVisible: Enter fee amount
 - tapOn: Enter fee amount
 - inputText: "10"
 - hideKeyboard
 - assertVisible: Payment Methods
 - assertVisible: Select
-- assertVisible:
-    id: customEditTextEndImageView
-    index: 1
+
 - tapOn: Select
 - assertVisible: SELECT
 - assertVisible: Please choose
@@ -114,6 +112,10 @@ tags:
     commands:
       - assertVisible: SUBMIT
       - tapOn: SUBMIT
+- assertVisible: "Total Ads Amount"
+- assertVisible: "510 IQD"
+
+
 - runFlow:
     when:
       visible: CREATE

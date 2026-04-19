@@ -7,4 +7,7 @@ appId: com.newroztech.gamewallet
 
 - runFlow: ../e2e_for_super/home/home_test_case.yaml
 
-
+- runFlow: ../e2e_for_super/ads/buy_test_validation.yaml
+- runFlow: ../e2e_for_super/ads/sell_test_validation.yaml
+- runFlow: ../e2e_for_super/add_balance/internal_transfer.yaml
+- runFlow: ../e2e_for_super/add_balance/crypto.yaml
