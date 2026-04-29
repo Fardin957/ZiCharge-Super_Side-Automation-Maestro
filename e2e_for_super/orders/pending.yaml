@@ -1,0 +1,68 @@
+appId: com.newroztech.gamewallet
+tags:
+  - smoke
+  - regression
+  - P0
+  - Functional
+---
+#Runflow use for the first login file the this file is exceuted
+- launchApp
+
+#Using ENV LOgin the app
+- runFlow:
+    file: ../../flows/login_helper.yaml
+    env:
+      MOBILE_NUMBER: "${Mobile_Number}"
+      PASSWORD: "${Password}"
+- assertVisible:
+    id: bannerImage
+- tapOn:
+    id: closeBtn
+- tapOn: open_drawer
+- tapOn: SUPER ZICHARGE
+- runFlow:
+    when:
+      visible: PROCEED
+    commands:
+      - assertVisible: PROCEED
+      - tapOn: PROCEED
+- runFlow:
+    when:
+      visible: Home
+    commands:
+      - assertVisible: Home
+- assertVisible:
+    id: "iv_orders"
+- assertVisible: "Orders"
+- tapOn: "Orders"
+- assertVisible: "Pending"
+- assertVisible: "Orders"
+- assertVisible: "How to accept order"
+- assertVisible:
+    id: "notificationIcon"
+- assertVisible: "Done"
+- assertVisible: "All"
+- tapOn: "All"
+- assertVisible:
+    id: "appLogo"
+- assertVisible: "ORDER FILTER"
+- assertVisible: "Please choose"
+- assertVisible: "All"
+- assertVisible: "Initiated"
+- assertVisible: "Confirmed"
+- assertVisible: "Paid"
+- assertVisible: "Disputed"
+- hideKeyboard
+- assertVisible:
+    point: 5%,34%
+- assertVisible:
+    id: "chatBtn"
+- scrollUntilVisible:
+    element: "QA NewrozTech"       # or use id:, below:, etc.
+    direction: DOWN              # UP, DOWN, LEFT, RIGHT
+    timeout: 50000               # optional, ms
+    speed: 40                    # optional, scroll speed
+    centerElement: true          # optional, centers element on screen
+
+- runFlow:
+    file: ../../flows/teardown.yaml

@@ -4,10 +4,22 @@ appId: com.newroztech.gamewallet
 
 # Login
 - runFlow: ../e2e_for_super/Login/login_with_valid_cred.yaml
-
+#HOME
 - runFlow: ../e2e_for_super/home/home_test_case.yaml
-
+#ADS LIST 
 - runFlow: ../e2e_for_super/ads/buy_test_validation.yaml
 - runFlow: ../e2e_for_super/ads/sell_test_validation.yaml
+#ADD BALANCE
+
+
 - runFlow: ../e2e_for_super/add_balance/internal_transfer.yaml
+#ADD BALANCE CRYPTRO 
 - runFlow: ../e2e_for_super/add_balance/crypto.yaml
+
+#TRANSACTION HISTORY
+- runFlow: ../e2e_for_super/trasnaction/transaction_history.yaml
+
+#GET SUPPORT 
+- runFlow: ../e2e_for_super/getsupport/get_support.yaml
+#ORDERS 
+- runFlow: ../e2e_for_super/orders/pending.yaml
