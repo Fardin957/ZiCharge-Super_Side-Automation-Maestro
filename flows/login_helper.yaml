@@ -1,4 +1,7 @@
 appId: com.newroztech.gamewallet
+env:
+  Mobile_Number: "1617539764"
+  Password: "Password100@"
 ---
 - tapOn:
     text: "Your Phone number here"

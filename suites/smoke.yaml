@@ -3,7 +3,7 @@ appId: com.newroztech.gamewallet
 
 
 # Login
-- runFlow: ../e2e_for_super/Login/login_with_valid_cred.yaml
+- runFlow: ../e2e_for_super/login/login_with_valid_cred.yaml
 #HOME
 - runFlow: ../e2e_for_super/home/home_test_case.yaml
 #ADS LIST 
@@ -17,7 +17,7 @@ appId: com.newroztech.gamewallet
 - runFlow: ../e2e_for_super/add_balance/crypto.yaml
 
 #TRANSACTION HISTORY
-- runFlow: ../e2e_for_super/trasnaction/transaction_history.yaml
+- runFlow: ../e2e_for_super/transaction/transaction_history.yaml
 
 #GET SUPPORT 
 - runFlow: ../e2e_for_super/getsupport/get_support.yaml
