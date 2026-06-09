@@ -1,0 +1,1571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ZiCharge - Smoke Test Report</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0b0f1a; --surface: #111827; --surface2: #1a2235; --border: #1e2d45;
+    --accent: #3b82f6; --accent2: #06b6d4; --green: #22c55e; --red: #ef4444;
+    --orange: #f59e0b; --text: #e2e8f0; --muted: #64748b;
+    --font: 'Syne', sans-serif; --mono: 'JetBrains Mono', monospace;
+  }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; padding: 40px 20px; }
+  .wrapper { max-width: 1100px; margin: 0 auto; }
+  .header {
+    background: linear-gradient(135deg, #1a2a4a 0%, #0f1e3a 60%, #0b1628 100%);
+    border: 1px solid var(--border); border-radius: 16px; padding: 36px 40px;
+    margin-bottom: 24px; position: relative; overflow: hidden;
+  }
+  .header::before {
+    content: ''; position: absolute; top: -60px; right: -60px;
+    width: 220px; height: 220px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 70%);
+  }
+  .header .subtitle { color: var(--accent2); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px; }
+  .header h1 { font-size: 2rem; font-weight: 800; background: linear-gradient(90deg, #60a5fa, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; }
+  .header p { color: var(--muted); font-size: 0.85rem; font-family: var(--mono); }
+  .status-banner { border-radius: 12px; padding: 18px; text-align: center; font-size: 1.1rem; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 24px; border: 1px solid; }
+  .all-passed { background: rgba(34,197,94,0.08); border-color: rgba(34,197,94,0.3); color: var(--green); }
+  .some-failed { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.3); color: var(--red); }
+  .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px 16px; text-align: center; }
+  .stat-card .number { font-size: 2rem; font-weight: 800; font-family: var(--mono); display: block; margin-bottom: 6px; }
+  .stat-card .label { color: var(--muted); font-size: 0.8rem; }
+  .c-blue { color: var(--accent); } .c-green { color: var(--green); } .c-red { color: var(--red); }
+  .c-orange { color: var(--orange); } .c-purple { color: #a78bfa; }
+
+  /* ── Pie Chart Section ── */
+  .chart-section {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 32px; margin-bottom: 24px;
+    display: flex; align-items: center; gap: 48px; flex-wrap: wrap;
+  }
+  .chart-title { font-size: 1rem; font-weight: 700; margin-bottom: 24px; color: var(--text); }
+  .chart-container { position: relative; width: 200px; height: 200px; flex-shrink: 0; }
+  .chart-container canvas { width: 200px !important; height: 200px !important; }
+  .chart-legend { flex: 1; min-width: 200px; }
+  .legend-item { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .legend-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+  .legend-info { flex: 1; }
+  .legend-label { font-size: 0.85rem; color: var(--muted); }
+  .legend-value { font-size: 1.2rem; font-weight: 800; font-family: var(--mono); }
+  .legend-pct { font-size: 0.8rem; color: var(--muted); margin-left: 6px; }
+  .center-text {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    text-align: center; pointer-events: none;
+  }
+  .center-text .big { font-size: 2rem; font-weight: 800; font-family: var(--mono); color: var(--text); }
+  .center-text .small { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; margin-bottom: 24px; }
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { background: linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%); }
+  thead th { padding: 14px 20px; text-align: left; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #fff; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.2s; }
+  tbody tr:hover { background: var(--surface2); }
+  tbody td { padding: 14px 20px; font-size: 0.9rem; font-family: var(--mono); }
+  .row-fail td:first-child { border-left: 3px solid var(--red); }
+  .row-pass td:first-child { border-left: 3px solid var(--green); }
+  .log-row td { padding: 0 20px 12px; background: var(--bg); }
+  .log-row:hover { background: var(--bg) !important; }
+  details summary { cursor: pointer; color: var(--accent); font-size: 0.8rem; padding: 8px 0 4px; user-select: none; }
+  details pre { background: #060a12; border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; font-size: 0.75rem; color: #94a3b8; overflow-x: auto; white-space: pre-wrap; word-break: break-all; max-height: 300px; overflow-y: auto; margin-top: 6px; }
+  .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; font-family: var(--font); }
+  .badge.pass { background: rgba(34,197,94,0.12); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+  .badge.fail { background: rgba(239,68,68,0.12); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+  .video-link { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; background: rgba(59,130,246,0.12); color: var(--accent); border: 1px solid rgba(59,130,246,0.3); text-decoration: none; }
+  .video-link:hover { background: rgba(59,130,246,0.25); }
+  .no-video { color: var(--muted); }
+  .full-log { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+  .full-log-header { padding: 16px 24px; font-weight: 700; font-size: 0.95rem; border-bottom: 1px solid var(--border); background: var(--surface2); }
+  .full-log pre { padding: 20px 24px; font-family: var(--mono); font-size: 0.78rem; color: #64748b; white-space: pre-wrap; word-break: break-all; max-height: 400px; overflow-y: auto; }
+  @media (max-width: 700px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    thead th:nth-child(3), tbody td:nth-child(3) { display: none; }
+    .chart-section { flex-direction: column; align-items: center; }
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="header">
+    <div class="subtitle">💨 Smoke Suite</div>
+    <h1>ZiCharge Super_User — Smoke Test Report</h1>
+    <p>Generated: 2026-06-09_13-20-35 &nbsp;|&nbsp; App: com.newroztech.gamewallet &nbsp;|&nbsp; Suite: smoke.yaml</p>
+  </div>
+
+  <div class="status-banner all-passed">✅ ALL SMOKE TESTS PASSED</div>
+
+  <div class="stats">
+    <div class="stat-card"><span class="number c-blue">9</span><span class="label">Total Flows</span></div>
+    <div class="stat-card"><span class="number c-green">9</span><span class="label">Passed</span></div>
+    <div class="stat-card"><span class="number c-red">0</span><span class="label">Failed</span></div>
+    <div class="stat-card"><span class="number c-orange">0</span><span class="label">Skipped</span></div>
+    <div class="stat-card"><span class="number c-purple">903.77s</span><span class="label">Total Duration</span></div>
+  </div>
+
+  <!-- ── Pie Chart ── -->
+  <div class="chart-section">
+    <div>
+      <div class="chart-title">📊 Test Results Breakdown</div>
+      <div class="chart-container">
+        <canvas id="pieChart"></canvas>
+        <div class="center-text">
+          <div class="big">9</div>
+          <div class="small">Total</div>
+        </div>
+      </div>
+    </div>
+    <div class="chart-legend">
+      <div class="legend-item">
+        <div class="legend-dot" style="background:#22c55e;"></div>
+        <div class="legend-info">
+          <div class="legend-label">Passed</div>
+          <div><span class="legend-value" style="color:#22c55e;">9</span><span class="legend-pct" id="pct-pass"></span></div>
+        </div>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:#ef4444;"></div>
+        <div class="legend-info">
+          <div class="legend-label">Failed</div>
+          <div><span class="legend-value" style="color:#ef4444;">0</span><span class="legend-pct" id="pct-fail"></span></div>
+        </div>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:#f59e0b;"></div>
+        <div class="legend-info">
+          <div class="legend-label">Skipped</div>
+          <div><span class="legend-value" style="color:#f59e0b;">0</span><span class="legend-pct" id="pct-skip"></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Flow Name</th><th>File</th><th>Duration</th><th>Result</th><th>🎥 Video</th></tr>
+      </thead>
+      <tbody>
+        
+    <tr class='row-pass'>
+      <td>1</td>
+      <td>login_with_valid_cred</td>
+      <td>login_with_valid_cred.yaml</td>
+      <td>44.90s</td>
+      <td><span class="badge pass">✅ Passed</span></td>
+      <td><a class='video-link' href='videos/login_with_valid_cred_2026-06-09_13-20-35.mp4'>🎥 Watch</a></td>
+    </tr>
+    <tr class='log-row'>
+      <td colspan='6'>
+        <details>
+          <summary>▶ View Log</summary>
+          <pre>Running on ZA2233WW3N
+ &gt; Flow login_with_valid_cred
+Launch app "com.newroztech.gamewallet"... COMPLETED
+Run ../../flows/login_helper.yaml...
+  Tap on "Your Phone number here"... COMPLETED
+  Erase 10 characters... COMPLETED
+  Input text ${Mobile_Number}... COMPLETED
+  Tap on "Password"... COMPLETED
+  Input text ${Password}... COMPLETED
+  Tap on id: customEditTextEndImageView, Index: 1... COMPLETED
+  Assert that "Forgot Password" is visible... COMPLETED
+  Assert that "You don't have account yet?" is visible... COMPLETED
+  Assert that "CREATE NEW ACCOUNT" is visible... COMPLETED
+  Tap on "LOGIN"... COMPLETED
+  Wait for animation to end... COMPLETED
+Run ../../flows/login_helper.yaml... COMPLETED
+Run ../../flows/teardown.yaml...
+  Stop com.newroztech.gamewallet... COMPLETED
+Run ../../flows/teardown.yaml... COMPLETED</pre>
+        </details>
+      </td>
+    </tr>
+    <tr class='row-pass'>
+      <td>2</td>
+      <td>home_test_case</td>
+      <td>home_test_case.yaml</td>
+      <td>67.43s</td>
+      <td><span class="badge pass">✅ Passed</span></td>
+      <td><a class='video-link' href='videos/home_test_case_2026-06-09_13-20-35.mp4'>🎥 Watch</a></td>
+    </tr>
+    <tr class='log-row'>
+      <td colspan='6'>
+        <details>
+          <summary>▶ View Log</summary>
+          <pre>Running on ZA2233WW3N
+ &gt; Flow home_test_case
+Launch app "com.newroztech.gamewallet"... COMPLETED
+Run ../../flows/login_helper.yaml...
+  Tap on "Your Phone number here"... COMPLETED
+  Erase 10 characters... COMPLETED
+  Input text ${Mobile_Number}... COMPLETED
+  Tap on "Password"... COMPLETED
+  Input text ${Password}... COMPLETED
+  Tap on id: customEditTextEndImageView, Index: 1... COMPLETED
+  Assert that "Forgot Password" is visible... COMPLETED
+  Assert that "You don't have account yet?" is visible... COMPLETED
+  Assert that "CREATE NEW ACCOUNT" is visible... COMPLETED
+  Tap on "LOGIN"... COMPLETED
+  Wait for animation to end... COMPLETED
+Run ../../flows/login_helper.yaml... COMPLETED
+Assert that id: bannerImage is visible... COMPLETED
+Tap on id: closeBtn... COMPLETED
+Tap on "open_drawer"... COMPLETED
+Tap on "SUPER ZICHARGE"... COMPLETED
+Run flow when "PROCEED" is visible...
+  Assert that "PROCEED" is visible... COMPLETED
+  Tap on "PROCEED"... COMPLETED
+Run flow when "PROCEED" is visible... COMPLETED
+Assert that id: drawerIcon is visible... COMPLETED
+Assert that id: appLogo is visible... COMPLETED
+Assert that id: notificationIcon is visible... COMPLETED
+Assert that "Wallet Balance" is visible... COMPLETED
+Assert that "Approved" is visible... COMPLETED
+Assert that id: balanceTextView is visible... COMPLETED
+Assert that "Services" is visible... COMPLETED
+Assert that id: adsImageView is visible... COMPLETED
+Assert that "Ads" is visible... COMPLETED
+Assert that id: addBalanceImageView is visible... COMPLETED
+Assert that "Add Balance" is visible... COMPLETED
+Assert that id: transactionHistoryImageView is visible... COMPLETED
+Assert that "Transactions
+History" is visible... COMPLETED
+Assert that id: supportImageView is visible... COMPLETED
+Assert that "Get Support" is visible... COMPLETED
+Assert that id: iv_home is visible... COMPLETED
+Assert that "Home" is visible... COMPLETED
+Assert that id: iv_orders is visible... COMPLETED
+Assert that "Orders" is visible... COMPLETED
+Assert that id: iv_profile is visible... COMPLETED
+Assert that "Profile" is visible... COMPLETED
+Wait for animation to end... COMPLETED
+Run ../../flows/teardown.yaml...
+  Stop com.newroztech.gamewallet... COMPLETED
+Run ../../flows/teardown.yaml... COMPLETED</pre>
+        </details>
+      </td>
+    </tr>
+    <tr class='row-pass'>
+      <td>3</td>
+      <td>buy_test_validation</td>
+      <td>buy_test_validation.yaml</td>
+      <td>130.69s</td>
+      <td><span class="badge pass">✅ Passed</span></td>
+      <td><a class='video-link' href='videos/buy_test_validation_2026-06-09_13-20-35.mp4'>🎥 Watch</a></td>
+    </tr>
+    <tr class='log-row'>
+      <td colspan='6'>
+        <details>
+          <summary>▶ View Log</summary>
+          <pre>Running on ZA2233WW3N
+ &gt; Flow buy_test_validation
+Launch app "com.newroztech.gamewallet"... COMPLETED
+Run ../../flows/login_helper.yaml...
+  Tap on "Your Phone number here"... COMPLETED
+  Erase 10 characters... COMPLETED
+  Input text ${Mobile_Number}... COMPLETED
+  Tap on "Password"... COMPLETED
+  Input text ${Password}... COMPLETED
+  Tap on id: customEditTextEndImageView, Index: 1... COMPLETED
+  Assert that "Forgot Password" is visible... COMPLETED
+  Assert that "You don't have account yet?" is visible... COMPLETED
+  Assert that "CREATE NEW ACCOUNT" is visible... COMPLETED
+  Tap on "LOGIN"... COMPLETED
+  Wait for animation to end... COMPLETED
+Run ../../flows/login_helper.yaml... COMPLETED
+Assert that id: bannerImage is visible... COMPLETED
+Tap on id: closeBtn... COMPLETED
+Tap on "open_drawer"... COMPLETED
+Tap on "SUPER ZICHARGE"... COMPLETED
+Run flow when "PROCEED" is visible...
+  Assert that "PROCEED" is visible... COMPLETED
+  Tap on "PROCEED"... COMPLETED
+Run flow when "PROCEED" is visible... COMPLETED
+Run flow when "Home" is visible...
+  Assert that "Home" is visible... COMPLETED
+Run flow when "Home" is visible... COMPLETED
+Tap on id: adsLayout... COMPLETED
+Assert that "BACK" is visible... COMPLETED
+Assert that id: appLogo is visible... COMPLETED
+Assert that id: notificationIcon is visible... COMPLETED
+Assert that "My Ads" is visible... COMPLETED
+Assert that "How to create Ad" is visible... COMPLETED
+Assert that "Buy" is visible... COMPLETED
+Assert that "All" is visible... COMPLETED
+Assert that id: customEditTextEndImageView is visible... COMPLETED
+Assert that id: fabAddItem is visible... COMPLETED
+Assert that id: tvTimeDate is visible... COMPLETED
+Assert that id: tvCurrentStatus is visible... COMPLETED
+Assert that "Fee" is visible... COMPLETED
+Assert that id: tvFeeAmount is visible... COMPLETED
+Assert that "Payment window" is visible... COMPLETED
+Assert that id: tvPaymentWindowTime is visible... COMPLETED
+Assert that id: tvPaymentMethod is visible... COMPLETED
+Assert that id: tvTotalAmount is visible... COMPLETED
+Scroll vertically... COMPLETED
+Scroll vertically... COMPLETED
+Swipe from (50%,30%) to (50%,80%) in 400 ms... COMPLETED
+Tap on id: customEditText... COMPLETED
+Assert that id: appLogo is visible... COMPLETED
+Assert that "SELECT" is visible... COMPLETED
+Assert that "All" is visible... COMPLETED
+Assert that "Active" is visible... COMPLETED
+Assert that "Hold" is visible... COMPLETED
+Assert that "Processing" is visible... COMPLETED
+Assert that "Payment Request" is visible... COMPLETED
+Assert that "Dispute Request" is visible... COMPLETED
+Tap on "Dispute Request"... COMPLETED
+Tap on id: fabAddItem... COMPLETED
+Assert that "Create Buy Ads" is visible... COMPLETED
+Assert that "Sell balance by creating a buy add for ZiCharge personal users to purchase." is visible... COMPLETED
+Assert that "Enter ads amount" is visible... COMPLETED
+Assert that id: customEditTextStartLayout is visible... COMPLETED
+Tap on id: customEditText, Index: 1... COMPLETED
+Input text 1000... COMPLETED
+Hide Keyboard... COMPLETED
+Assert that "Enter fee amount (as default 0)" is visible... COMPLETED
+Tap on "Enter fee amount"... COMPLETED
+Input text 10... COMPLETED
+Hide Keyboard... COMPLETED
+Assert that "Payment Methods" is visible... COMPLETED
+Assert that "Select" is visible... COMPLETED
+Tap on "Select"... COMPLETED
+Assert that id: appLogo is visible... COMPLETED
+Assert that "SELECT" is visible... COMPLETED
+Assert that "Please choose" is visible... COMPLETED
+Assert that "Rocket - (827288282828282)" is visible... COMPLETED
+Assert that id: checkBox is visible... COMPLETED
+Tap on "Rocket - (827288282828282)"... COMPLETED
+Run flow when "SUBMIT" is visible...
+  Assert that "SUBMIT" is visible... COMPLETED
+  Tap on "SUBMIT"... COMPLETED
+Run flow when "SUBMIT" is visible... COMPLETED
+Assert that "Total Ads Amount" is visible... COMPLETED
+Assert that "1,010 IQD" is visible... COMPLETED
+Run flow when "CREATE" is visible...
+  Assert that "CREATE" is visible... COMPLETED
+  Tap on "CREATE"... COMPLETED
+Run flow when "CREATE" is visible... COMPLETED
+Assert that id: dialogImage is visible... COMPLETED
+Assert that "Congratulations!" is visible... COMPLETED
+Assert that "Your ad has been created
+successfully." is visible... COMPLETED
+Run flow when "OK" is visible...
+  Assert that "OK" is visible... COMPLETED
+  Tap on "OK"... COMPLETED
+Run flow when "OK" is visible... COMPLETED
+Assert that "Active" is visible... COMPLETED
+Assert that "Cancel Ad" is visible... COMPLETED
+Tap on "Cancel Ad"... COMPLETED
+Assert that id: dialogImage is visible... COMPLETED
+Assert that "Cancel This Ad?" is visible... COMPLETED
+Assert that "This ad will be canceled and can not be activated again" is visible... COMPLETED
+Run flow when "CONFIRM" is visible...
+  Assert that "CONFIRM" is visible... COMPLETED
+  Tap on "CONFIRM"... COMPLETED
+Run flow when "CONFIRM" is visible... COMPLETED
+Assert that "Cancelled" is visible... COMPLETED
+Run ../../flows/teardown.yaml...
+  Stop com.newroztech.gamewallet... COMPLETED
+Run ../../flows/teardown.yaml... COMPLETED</pre>
+        </details>
+      </td>
+    </tr>
+    <tr class='row-pass'>
+      <td>4</td>
+      <td>sell_test_validation</td>
+      <td>sell_test_validation.yaml</td>
+      <td>139.06s</td>
+      <td><span class="badge pass">✅ Passed</span></td>
+      <td><a class='video-link' href='videos/sell_test_validation_2026-06-09_13-20-35.mp4'>🎥 Watch</a></td>
+    </tr>
+    <tr class='log-row'>
+      <td colspan='6'>
+        <details>
+          <summary>▶ View Log</summary>
+          <pre>Running on ZA2233WW3N
+ &gt; Flow sell_test_validation
+Launch app "com.newroztech.gamewallet"... COMPLETED
+Run ../../flows/login_helper.yaml...
+  Tap on "Your Phone number here"... COMPLETED
+  Erase 10 characters... COMPLETED
+  Input text ${Mobile_Number}... COMPLETED
+  Tap on "Password"... COMPLETED
+  Input text ${Password}... COMPLETED
+  Tap on id: customEditTextEndImageView, Index: 1... COMPLETED
+  Assert that "Forgot Password" is visible... COMPLETED
+  Assert that "You don't have account yet?" is visible... COMPLETED
+  Assert that "CREATE NEW ACCOUNT" is visible... COMPLETED
+  Tap on "LOGIN"... COMPLETED
+  Wait for animation to end... COMPLETED
+Run ../../flows/login_helper.yaml... COMPLETED
+Assert that id: bannerImage is visible... COMPLETED
+Tap on id: closeBtn... COMPLETED
+Tap on "open_drawer"... COMPLETED
+Tap on "SUPER ZICHARGE"... COMPLETED
+Run flow when "PROCEED" is visible...
+  Assert that "PROCEED" is visible... COMPLETED
+  Tap on "PROCEED"... COMPLETED
+Run flow when "PROCEED" is visible... COMPLETED
+Run flow when "Home" is visible...
+  Assert that "Home" is visible... COMPLETED
+Run flow when "Home" is visible... COMPLETED
+Tap on id: adsLayout... COMPLETED
+Tap on id: adsSellLayout... COMPLETED
+Assert that "My Ads" is visible... COMPLETED
+Assert that "How to create Ad" is visible... COMPLETED
+Assert that "Sell" is visible... COMPLETED
+Assert that "All" is visible... COMPLETED
+Assert that id: customEditTextEndImageView is visible... COMPLETED
+Assert that id: tvTimeDate is visible... COMPLETED
+Assert that id: tvCurrentStatus is visible... COMPLETED
+Assert that "Fee" is visible... COMPLETED
+Assert that id: tvFeeAmount is visible... COMPLETED
+Assert that "Payment window" is visible... COMPLETED
+Assert that id: tvPaymentWindowTime is visible... COMPLETED
+Assert that id: tvPaymentMethod is visible... COMPLETED
+Assert that id: tvTotalAmount is visible... COMPLETED
+Tap on id: customEditText... COMPLETED
+Assert that "SELECT" is visible... COMPLETED
+Assert that "All" is visible... COMPLETED
+Assert that "Active" is visible... COMPLETED
+Assert that "Hold" is visible... COMPLETED
+Assert that "Processing" is visible... COMPLETED
+Assert that "Payment Request" is visible... COMPLETED
+Assert that "Dispute Request" is visible... COMPLETED
+Tap on "Active"... COMPLETED
+Assert that "Active" is visible... COMPLETED
+Run flow when "No Ads data found" is visible...
+  Assert that "No Ads data found" is visible... COMPLETED
+  Assert that "You haven't added anything yet!" is visible... COMPLETED
+Run flow when "No Ads data found" is visible... COMPLETED
+Assert that id: fabAddItem is visible... COMPLETED
+Tap on id: fabAddItem... COMPLETED
+Assert that id: appLogo is visible... COMPLETED
+Assert that id: notificationIcon is visible... COMPLETED
+Assert that "Create Sell Ads" is visible... COMPLETED
+Assert that "Buy balance by creating a sell add for ZiCharge personal users to release." is visible... COMPLETED
+Assert that "Enter ads amount" is visible... COMPLETED
+Tap on "Enter amount"... COMPLETED
+Input text 500... COMPLETED
+Hide Keyboard... COMPLETED
+Assert that "Enter fee amount (as default 0)" is visible... COMPLETED
+Assert that "Enter fee amount" is visible... COMPLETED
+Tap on "Enter fee amount"... COMPLETED
+Input text 10... COMPLETED
+Hide Keyboard... COMPLETED
+Assert that "Payment Methods" is visible... COMPLETED
+Assert that "Select" is visible... COMPLETED
+Tap on "Select"... COMPLETED
+Assert that "SELECT" is visible... COMPLETED
+Assert that "Please choose" is visible... COMPLETED
+Assert that id: checkBox is visible... COMPLETED
+Assert that "Rocket - (827288282828282)" is visible... COMPLETED
+Tap on "Rocket - (827288282828282)"... COMPLETED
+Run flow when "SUBMIT" is visible...
+  Assert that "SUBMIT" is visible... COMPLETED
+  Tap on "SUBMIT"... COMPLETED
+Run flow when "SUBMIT" is visible... COMPLETED
+Assert that "Total Ads Amount" is visible... COMPLETED
+Assert that "510 IQD" is visible... COMPLETED
+Run flow when "CREATE" is visible...
+  Assert that "CREATE" is visible... COMPLETED
+  Tap on "CREATE"... COMPLETED
+Run flow when "CREATE" is visible... COMPLETED
+Assert that id: dialogImage is visible... COMPLETED
+Assert that "Congratulations!" is visible... COMPLETED
+Assert that "Your ad has been created
+successfully." is visible... COMPLETED
+Tap on "OK"... COMPLETED
+Assert that id: tvActive is visible... COMPLETED
+Assert that "Cancel Ad" is visible... COMPLETED
+Tap on "Cancel Ad"... COMPLETED
+Assert that id: dialogImage is visible... COMPLETED
+Assert that "Cancel This Ad?" is visible... COMPLETED
+Assert that "This ad will be canceled and can not be activated again" is visible... COMPLETED
+Run flow when "CONFIRM" is visible...
+  Assert that "CONFIRM" is visible... COMPLETED
+  Tap on "CONFIRM"... COMPLETED
+Run flow when "CONFIRM" is visible... COMPLETED
+Assert that "Cancelled" is visible... COMPLETED
+Run ../../flows/teardown.yaml...
+  Stop com.newroztech.gamewallet... COMPLETED
+Run ../../flows/teardown.yaml... COMPLETED</pre>
+        </details>
+      </td>
+    </tr>
+    <tr class='row-pass'>
+      <td>5</td>
+      <td>internal_transfer</td>
+      <td>internal_transfer.yaml</td>
+      <td>114.16s</td>
+      <td><span class="badge pass">✅ Passed</span></td>
+      <td><a class='video-link' href='videos/internal_transfer_2026-06-09_13-20-35.mp4'>🎥 Watch</a></td>
+    </tr>
+    <tr class='log-row'>
+      <td colspan='6'>
+        <details>
+          <summary>▶ View Log</summary>
+          <pre>Running on ZA2233WW3N
+ &gt; Flow internal_transfer
+Launch app "com.newroztech.gamewallet"... COMPLETED
+Run ../../flows/login_helper.yaml...
+  Tap on "Your Phone number here"... COMPLETED
+  Erase 10 characters... COMPLETED
+  Input text ${Mobile_Number}... COMPLETED
+  Tap on "Password"... COMPLETED
+  Input text ${Password}... COMPLETED
+  Tap on id: customEditTextEndImageView, Index: 1... COMPLETED
+  Assert that "Forgot Password" is visible... COMPLETED
+  Assert that "You don't have account yet?" is visible... COMPLETED
+  Assert that "CREATE NEW ACCOUNT" is visible... COMPLETED
+  Tap on "LOGIN"... COMPLETED
+  Wait for animation to end... COMPLETED
+Run ../../flows/login_helper.yaml... COMPLETED
+Assert that id: bannerImage is visible... COMPLETED
+Tap on id: closeBtn... COMPLETED
+Tap on "open_drawer"... COMPLETED
+Tap on "SUPER ZICHARGE"... COMPLETED
+Run flow when "PROCEED" is visible...
+  Assert that "PROCEED" is visible... COMPLETED
+  Tap on "PROCEED"... COMPLETED
+Run flow when "PROCEED" is visible... COMPLETED
+Run flow when "Home" is visible...
+  Assert that "Home" is visible... COMPLETED
+Run flow when "Home" is visible... COMPLETED
+Assert that "BACK" is visible... COMPLETED
+Assert that id: appLogo is visible... COMPLETED
+Assert that id: notificationIcon is visible... COMPLETED
+Assert that "Add Balance" is visible... COMPLETED
+Tap on id: addBalanceLayout... COMPLETED
+Assert that id: getwayIconImageView is visible... COMPLETED
+Assert that "Internal Transfer" is visible... COMPLETED
+Assert that "Balance can be added from your personal account to Super Zicharge." is visible... COMPLETED
+Assert that "Internal Transfer Mobile Number" is visible... COMPLETED
+Assert that "+9641617539764" is visible... COMPLETED
+Tap on id: customEditText... COMPLETED
+Input text 500... COMPLETED
+Assert that id: tvAvailableBalance is visible... COMPLETED
+Assert that "Enter Amount" is visible... COMPLETED
+Assert that "Amount to add (Super ZiCharge)" is visible... COMPLETED
+Tap on "Amount to add (Super ZiCharge)"... COMPLETED
+Input text 500... COMPLETED
+Hide Keyboard... COMPLETED
+Run flow when "DEPOSIT" is visible...
+  Assert that "DEPOSIT" is visible... COMPLETED
+  Tap on "DEPOSIT"... COMPLETED
+Run flow when "DEPOSIT" is visible... COMPLETED
+Assert that id: dialogCardView is visible... COMPLETED
+Assert that "Send Confirmation" is visible... COMPLETED
+Assert that "Your deposit request of IQD 500 is processing." is visible... COMPLETED
+Assert that "CANCEL" is visible... COMPLETED
+Run flow when "CANCEL" is visible...
+  Assert that "CANCEL" is visible... COMPLETED
+  Tap on "CANCEL"... COMPLETED
+Run flow when "CANCEL" is visible... COMPLETED
+Run flow when "DEPOSIT" is visible...
+  Assert that "DEPOSIT" is visible... COMPLETED
+  Tap on "DEPOSIT"... COMPLETED
+Run flow when "DEPOSIT" is visible... COMPLETED
+Assert that "YES, CONFIRM" is visible... COMPLETED
+Run flow when "YES, CONFIRM" is visible...
+  Assert that "YES, CONFIRM" is visible... COMPLETED
+  Tap on "YES, CONFIRM"... COMPLETED
+Run flow when "YES, CONFIRM" is visible... COMPLETED
+Run ../../flows/enter_your_pin.yaml...
+  Assert that id: appLogo is visible... COMPLETED
+  Assert that "ENTER YOUR ACCOUNT PIN" is visible... COMPLETED
+  Assert that "You need to enter your account PIN number here to confirm the transaction process." is visible... COMPLETED
+  Assert that "Enter PIN" is visible... COMPLETED
+  Tap on "Enter PIN"... COMPLETED
+  Input text 1245... COMPLETED
+  Run flow when "CONFIRM" is visible...
+    Assert that "CONFIRM" is visible... COMPLETED
+    Tap on "CONFIRM"... COMPLETED
+  Run flow when "CONFIRM" is visible... COMPLETED
+Run ../../flows/enter_your_pin.yaml... COMPLETED
+Assert that id: appLogo is visible... COMPLETED
+Assert that id: statusIcon is visible... COMPLETED
+Assert that "Congratulations!" is visible... COMPLETED
+Assert that "Your balance has been successfully added to your account." is visible... COMPLETED
+Take screenshot ../../screenshots/Internal money transfer balance successfull... COMPLETED
+Run flow when "GO HOME" is visible...
+  Assert that "GO HOME" is visible... COMPLETED
+  Tap on "GO HOME"... COMPLETED
+Run flow when "GO HOME" is visible... COMPLETED
+Run flow when "HOME" is visible...
+  Assert that "HOME" is visible... COMPLETED
+Run flow when "HOME" is visible... COMPLETED
+Run ../../flows/teardown.yaml...
+  Stop com.newroztech.gamewallet... COMPLETED
+Run ../../flows/teardown.yaml... COMPLETED</pre>
+        </details>
+      </td>
+    </tr>
+    <tr class='row-pass'>
+      <td>6</td>
+      <td>crypto</td>
+      <td>crypto.yaml</td>
+      <td>116.38s</td>
+      <td><span class="badge pass">✅ Passed</span></td>
+      <td><a class='video-link' href='videos/crypto_2026-06-09_13-20-35.mp4'>🎥 Watch</a></td>
+    </tr>
+    <tr class='log-row'>
+      <td colspan='6'>
+        <details>
+          <summary>▶ View Log</summary>
+          <pre>Running on ZA2233WW3N
+ &gt; Flow crypto
+Launch app "com.newroztech.gamewallet"... COMPLETED
+Run ../../flows/login_helper.yaml...
+  Tap on "Your Phone number here"... COMPLETED
+  Erase 10 characters... COMPLETED
+  Input text ${Mobile_Number}... COMPLETED
+  Tap on "Password"... COMPLETED
+  Input text ${Password}... COMPLETED
+  Tap on id: customEditTextEndImageView, Index: 1... COMPLETED
+  Assert that "Forgot Password" is visible... COMPLETED
+  Assert that "You don't have account yet?" is visible... COMPLETED
+  Assert that "CREATE NEW ACCOUNT" is visible... COMPLETED
+  Tap on "LOGIN"... COMPLETED
+  Wait for animation to end... COMPLETED
+Run ../../flows/login_helper.yaml... COMPLETED
+Assert that id: bannerImage is visible... COMPLETED
+Tap on id: closeBtn... COMPLETED
+Tap on "open_drawer"... COMPLETED
+Tap on "SUPER ZICHARGE"... COMPLETED
+Run flow when "PROCEED" is visible...
+  Assert that "PROCEED" is visible... COMPLETED
+  Tap on "PROCEED"... COMPLETED
+Run flow when "PROCEED" is visible... COMPLETED
+Run flow when "Home" is visible...
+  Assert that "Home" is visible... COMPLETED
+Run flow when "Home" is visible... COMPLETED
+Tap on id: addBalanceLayout... COMPLETED
+Tap on id: adapterLayout... COMPLETED
+Assert that id: getwayIconImageView is visible... COMPLETED
+Assert that "Crypto" is visible... COMPLETED
+Tap on "Crypto"... COMPLETED
+Assert that id: customEditTextStartImageView is visible... COMPLETED
+Assert that "Currency" is visible... COMPLETED
+Assert that id: customEditTextEndImageView is visible... COMPLETED
+Tap on "Currency"... COMPLETED
+Assert that "CURRENCY LIST" is visible... COMPLETED
+Assert that "Please select cryptocurrencies from below list." is visible... COMPLETED
+Assert that id: customEditTextStartImageView is visible... COMPLETED
+Assert that "Search" is visible... COMPLETED
+Run random.js... COMPLETED
+Scrolling DOWN until "${output.selectedCurrency}" is visible with speed 40, visibility percentage 100%, timeout 20000 ms, with centering disabled... COMPLETED
+Tap on "${output.selectedCurrency}"... COMPLETED
+Assert that id: customEditTextStartImageView is visible... COMPLETED
+Assert that "Please select Network" is visible... COMPLETED
+Assert that "Network" is visible... COMPLETED
+Tap on "Network"... COMPLETED
+Assert that id: content is visible... COMPLETED
+Tap on id: content... COMPLETED
+Assert that id: customEditTextStartLayout is visible... COMPLETED
+Assert that "Amount" is visible... COMPLETED
+Assert that "Please enter amount in IQD to Deposit" is visible... COMPLETED
+Tap on "Amount"... COMPLETED
+Input text 250... COMPLETED
+Hide Keyboard... COMPLETED
+Run flow when "DEPOSIT" is visible...
+  Assert that "DEPOSIT" is visible... COMPLETED
+  Tap on "DEPOSIT"... COMPLETED
+Run flow when "DEPOSIT" is visible... COMPLETED
+Assert that "IQD Amount" is visible... COMPLETED
+Assert that "250" is visible... COMPLETED
+Assert that "Deposit Crypto Balance:" is visible... COMPLETED
+Assert that "Please transfer Crypto Balance to below address" is visible... COMPLETED
+Assert that "Receiver wallet address" is visible... COMPLETED
+Assert that id: receiverWalletAddressLayout is visible... COMPLETED
+Assert that "COPY" is visible... COMPLETED
+Tap on "COPY"... COMPLETED
+Assert that "* Click on the copy button if you unable to scan QR code" is visible... COMPLETED
+Assert that "Address is valid for 60 minutes" is visible... COMPLETED
+Assert that id: qrCodeImage is visible... COMPLETED
+Assert that "QR Code" is visible... COMPLETED
+Assert that  is visible... COMPLETED
+Assert that id: qrCode is visible... COMPLETED
+Run flow when "REQUEST HISTORY" is visible...
+  Assert that "REQUEST HISTORY" is visible... COMPLETED
+  Tap on "REQUEST HISTORY"... COMPLETED
+Run flow when "REQUEST HISTORY" is visible... COMPLETED
+Assert that  is visible... COMPLETED
+Run ../../flows/teardown.yaml...
+  Stop com.newroztech.gamewallet... COMPLETED
+Run ../../flows/teardown.yaml... COMPLETED</pre>
+        </details>
+      </td>
+    </tr>
+    <tr class='row-pass'>
+      <td>7</td>
+      <td>transaction_history</td>
+      <td>transaction_history.yaml</td>
+      <td>79.57s</td>
+      <td><span class="badge pass">✅ Passed</span></td>
+      <td><a class='video-link' href='videos/transaction_history_2026-06-09_13-20-35.mp4'>🎥 Watch</a></td>
+    </tr>
+    <tr class='log-row'>
+      <td colspan='6'>
+        <details>
+          <summary>▶ View Log</summary>
+          <pre>Running on ZA2233WW3N
+ &gt; Flow transaction_history
+Launch app "com.newroztech.gamewallet"... COMPLETED
+Run ../../flows/login_helper.yaml...
+  Tap on "Your Phone number here"... COMPLETED
+  Erase 10 characters... COMPLETED
+  Input text ${Mobile_Number}... COMPLETED
+  Tap on "Password"... COMPLETED
+  Input text ${Password}... COMPLETED
+  Tap on id: customEditTextEndImageView, Index: 1... COMPLETED
+  Assert that "Forgot Password" is visible... COMPLETED
+  Assert that "You don't have account yet?" is visible... COMPLETED
+  Assert that "CREATE NEW ACCOUNT" is visible... COMPLETED
+  Tap on "LOGIN"... COMPLETED
+  Wait for animation to end... COMPLETED
+Run ../../flows/login_helper.yaml... COMPLETED
+Assert that id: bannerImage is visible... COMPLETED
+Tap on id: closeBtn... COMPLETED
+Tap on "open_drawer"... COMPLETED
+Tap on "SUPER ZICHARGE"... COMPLETED
+Run flow when "PROCEED" is visible...
+  Assert that "PROCEED" is visible... COMPLETED
+  Tap on "PROCEED"... COMPLETED
+Run flow when "PROCEED" is visible... COMPLETED
+Run flow when "Home" is visible...
+  Assert that "Home" is visible... COMPLETED
+Run flow when "Home" is visible... COMPLETED
+Assert that id: transactionHistoryImageView is visible... COMPLETED
+Assert that "Transactions
+History" is visible... COMPLETED
+Tap on id: transactionHistoryLayout... COMPLETED
+Assert that id: appLogo is visible... COMPLETED
+Assert that id: notificationIcon is visible... COMPLETED
+Assert that "TRANSACTIONS
+HISTORY" is visible... COMPLETED
+Assert that  is visible... COMPLETED
+Scrolling DOWN until "P2P Transfer" is visible with speed 40, visibility percentage 100%, timeout 20000 ms, with centering disabled... COMPLETED
+Scrolling DOWN until "Fardin Faruk" is visible with speed 40, visibility percentage 100%, timeout 20000 ms, with centering disabled... COMPLETED
+Scroll vertically... COMPLETED
+Scroll vertically... COMPLETED
+Run ../../flows/teardown.yaml...
+  Stop com.newroztech.gamewallet... COMPLETED
+Run ../../flows/teardown.yaml... COMPLETED</pre>
+        </details>
+      </td>
+    </tr>
+    <tr class='row-pass'>
+      <td>8</td>
+      <td>get_support</td>
+      <td>get_support.yaml</td>
+      <td>91.39s</td>
+      <td><span class="badge pass">✅ Passed</span></td>
+      <td><a class='video-link' href='videos/get_support_2026-06-09_13-20-35.mp4'>🎥 Watch</a></td>
+    </tr>
+    <tr class='log-row'>
+      <td colspan='6'>
+        <details>
+          <summary>▶ View Log</summary>
+          <pre>Running on ZA2233WW3N
+ &gt; Flow get_support
+Launch app "com.newroztech.gamewallet"... COMPLETED
+Run ../../flows/login_helper.yaml...
+  Tap on "Your Phone number here"... COMPLETED
+  Erase 10 characters... COMPLETED
+  Input text ${Mobile_Number}... COMPLETED
+  Tap on "Password"... COMPLETED
+  Input text ${Password}... COMPLETED
+  Tap on id: customEditTextEndImageView, Index: 1... COMPLETED
+  Assert that "Forgot Password" is visible... COMPLETED
+  Assert that "You don't have account yet?" is visible... COMPLETED
+  Assert that "CREATE NEW ACCOUNT" is visible... COMPLETED
+  Tap on "LOGIN"... COMPLETED
+  Wait for animation to end... COMPLETED
+Run ../../flows/login_helper.yaml... COMPLETED
+Assert that id: bannerImage is visible... COMPLETED
+Tap on id: closeBtn... COMPLETED
+Tap on "open_drawer"... COMPLETED
+Tap on "SUPER ZICHARGE"... COMPLETED
+Run flow when "PROCEED" is visible...
+  Assert that "PROCEED" is visible... COMPLETED
+  Tap on "PROCEED"... COMPLETED
+Run flow when "PROCEED" is visible... COMPLETED
+Run flow when "Home" is visible...
+  Assert that "Home" is visible... COMPLETED
+Run flow when "Home" is visible... COMPLETED
+Assert that id: supportImageView is visible... COMPLETED
+Assert that "Get Support" is visible... COMPLETED
+Tap on id: supportLayout... COMPLETED
+Assert that id: appLogo is visible... COMPLETED
+Assert that "LIVE CHAT" is visible... COMPLETED
+Assert that "ZiDesk" is visible... COMPLETED
+Assert that "Online" is visible... COMPLETED
+Assert that "سڵاو، بەخێربێیت بۆ پاڵپشتی زیچارج. تکایە کێشەکەت یان پرسیارەکەت بنووسە." is visible... COMPLETED
+Assert that "مرحباً بك في دعم زيجارج. يرجى طرح مشكلتك أو سؤالك." is visible... COMPLETED
+Assert that "Welcome to Zicharge Support. Please state your issue or question." is visible... COMPLETED
+Assert that "Type your message..." is visible... COMPLETED
+Assert that "Attach file" is visible... COMPLETED
+Assert that id: babylon-chat-send is visible... COMPLETED
+Tap on "Type your message..."... COMPLETED
+Input text Trade... COMPLETED
+Tap on id: babylon-chat-send... COMPLETED
+Tap on "BACK"... COMPLETED
+Run ../../flows/teardown.yaml...
+  Stop com.newroztech.gamewallet... COMPLETED
+Run ../../flows/teardown.yaml... COMPLETED</pre>
+        </details>
+      </td>
+    </tr>
+    <tr class='row-pass'>
+      <td>9</td>
+      <td>pending</td>
+      <td>pending.yaml</td>
+      <td>88.20s</td>
+      <td><span class="badge pass">✅ Passed</span></td>
+      <td><a class='video-link' href='videos/pending_2026-06-09_13-20-35.mp4'>🎥 Watch</a></td>
+    </tr>
+    <tr class='log-row'>
+      <td colspan='6'>
+        <details>
+          <summary>▶ View Log</summary>
+          <pre>Running on ZA2233WW3N
+ &gt; Flow pending
+Launch app "com.newroztech.gamewallet"... COMPLETED
+Run ../../flows/login_helper.yaml...
+  Tap on "Your Phone number here"... COMPLETED
+  Erase 10 characters... COMPLETED
+  Input text ${Mobile_Number}... COMPLETED
+  Tap on "Password"... COMPLETED
+  Input text ${Password}... COMPLETED
+  Tap on id: customEditTextEndImageView, Index: 1... COMPLETED
+  Assert that "Forgot Password" is visible... COMPLETED
+  Assert that "You don't have account yet?" is visible... COMPLETED
+  Assert that "CREATE NEW ACCOUNT" is visible... COMPLETED
+  Tap on "LOGIN"... COMPLETED
+  Wait for animation to end... COMPLETED
+Run ../../flows/login_helper.yaml... COMPLETED
+Assert that id: bannerImage is visible... COMPLETED
+Tap on id: closeBtn... COMPLETED
+Tap on "open_drawer"... COMPLETED
+Tap on "SUPER ZICHARGE"... COMPLETED
+Run flow when "PROCEED" is visible...
+  Assert that "PROCEED" is visible... COMPLETED
+  Tap on "PROCEED"... COMPLETED
+Run flow when "PROCEED" is visible... COMPLETED
+Run flow when "Home" is visible...
+  Assert that "Home" is visible... COMPLETED
+Run flow when "Home" is visible... COMPLETED
+Assert that id: iv_orders is visible... COMPLETED
+Assert that "Orders" is visible... COMPLETED
+Tap on "Orders"... COMPLETED
+Assert that "Pending" is visible... COMPLETED
+Assert that "Orders" is visible... COMPLETED
+Assert that "How to accept order" is visible... COMPLETED
+Assert that id: notificationIcon is visible... COMPLETED
+Assert that "Done" is visible... COMPLETED
+Assert that "All" is visible... COMPLETED
+Tap on "All"... COMPLETED
+Assert that id: appLogo is visible... COMPLETED
+Assert that "ORDER FILTER" is visible... COMPLETED
+Assert that "Please choose" is visible... COMPLETED
+Assert that "All" is visible... COMPLETED
+Assert that "Initiated" is visible... COMPLETED
+Assert that "Confirmed" is visible... COMPLETED
+Assert that "Paid" is visible... COMPLETED
+Assert that "Disputed" is visible... COMPLETED
+Hide Keyboard... COMPLETED
+Assert that  is visible... COMPLETED
+Assert that id: chatBtn is visible... COMPLETED
+Scrolling DOWN until "QA NewrozTech" is visible with speed 40, visibility percentage 100%, timeout 50000 ms, with centering enabled... COMPLETED
+Run ../../flows/teardown.yaml...
+  Stop com.newroztech.gamewallet... COMPLETED
+Run ../../flows/teardown.yaml... COMPLETED</pre>
+        </details>
+      </td>
+    </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="full-log">
+    <div class="full-log-header">📋 Maestro Execution Log</div>
+    <pre>=== login_with_valid_cred ===
+Running on ZA2233WW3N
+ &gt; Flow login_with_valid_cred
+Launch app "com.newroztech.gamewallet"... COMPLETED
+Run ../../flows/login_helper.yaml...
+  Tap on "Your Phone number here"... COMPLETED
+  Erase 10 characters... COMPLETED
+  Input text ${Mobile_Number}... COMPLETED
+  Tap on "Password"... COMPLETED
+  Input text ${Password}... COMPLETED
+  Tap on id: customEditTextEndImageView, Index: 1... COMPLETED
+  Assert that "Forgot Password" is visible... COMPLETED
+  Assert that "You don't have account yet?" is visible... COMPLETED
+  Assert that "CREATE NEW ACCOUNT" is visible... COMPLETED
+  Tap on "LOGIN"... COMPLETED
+  Wait for animation to end... COMPLETED
+Run ../../flows/login_helper.yaml... COMPLETED
+Run ../../flows/teardown.yaml...
+  Stop com.newroztech.gamewallet... COMPLETED
+Run ../../flows/teardown.yaml... COMPLETED
+
+=== home_test_case ===
+Running on ZA2233WW3N
+ &gt; Flow home_test_case
+Launch app "com.newroztech.gamewallet"... COMPLETED
+Run ../../flows/login_helper.yaml...
+  Tap on "Your Phone number here"... COMPLETED
+  Erase 10 characters... COMPLETED
+  Input text ${Mobile_Number}... COMPLETED
+  Tap on "Password"... COMPLETED
+  Input text ${Password}... COMPLETED
+  Tap on id: customEditTextEndImageView, Index: 1... COMPLETED
+  Assert that "Forgot Password" is visible... COMPLETED
+  Assert that "You don't have account yet?" is visible... COMPLETED
+  Assert that "CREATE NEW ACCOUNT" is visible... COMPLETED
+  Tap on "LOGIN"... COMPLETED
+  Wait for animation to end... COMPLETED
+Run ../../flows/login_helper.yaml... COMPLETED
+Assert that id: bannerImage is visible... COMPLETED
+Tap on id: closeBtn... COMPLETED
+Tap on "open_drawer"... COMPLETED
+Tap on "SUPER ZICHARGE"... COMPLETED
+Run flow when "PROCEED" is visible...
+  Assert that "PROCEED" is visible... COMPLETED
+  Tap on "PROCEED"... COMPLETED
+Run flow when "PROCEED" is visible... COMPLETED
+Assert that id: drawerIcon is visible... COMPLETED
+Assert that id: appLogo is visible... COMPLETED
+Assert that id: notificationIcon is visible... COMPLETED
+Assert that "Wallet Balance" is visible... COMPLETED
+Assert that "Approved" is visible... COMPLETED
+Assert that id: balanceTextView is visible... COMPLETED
+Assert that "Services" is visible... COMPLETED
+Assert that id: adsImageView is visible... COMPLETED
+Assert that "Ads" is visible... COMPLETED
+Assert that id: addBalanceImageView is visible... COMPLETED
+Assert that "Add Balance" is visible... COMPLETED
+Assert that id: transactionHistoryImageView is visible... COMPLETED
+Assert that "Transactions
+History" is visible... COMPLETED
+Assert that id: supportImageView is visible... COMPLETED
+Assert that "Get Support" is visible... COMPLETED
+Assert that id: iv_home is visible... COMPLETED
+Assert that "Home" is visible... COMPLETED
+Assert that id: iv_orders is visible... COMPLETED
+Assert that "Orders" is visible... COMPLETED
+Assert that id: iv_profile is visible... COMPLETED
+Assert that "Profile" is visible... COMPLETED
+Wait for animation to end... COMPLETED
+Run ../../flows/teardown.yaml...
+  Stop com.newroztech.gamewallet... COMPLETED
+Run ../../flows/teardown.yaml... COMPLETED
+
+=== buy_test_validation ===
+Running on ZA2233WW3N
+ &gt; Flow buy_test_validation
+Launch app "com.newroztech.gamewallet"... COMPLETED
+Run ../../flows/login_helper.yaml...
+  Tap on "Your Phone number here"... COMPLETED
+  Erase 10 characters... COMPLETED
+  Input text ${Mobile_Number}... COMPLETED
+  Tap on "Password"... COMPLETED
+  Input text ${Password}... COMPLETED
+  Tap on id: customEditTextEndImageView, Index: 1... COMPLETED
+  Assert that "Forgot Password" is visible... COMPLETED
+  Assert that "You don't have account yet?" is visible... COMPLETED
+  Assert that "CREATE NEW ACCOUNT" is visible... COMPLETED
+  Tap on "LOGIN"... COMPLETED
+  Wait for animation to end... COMPLETED
+Run ../../flows/login_helper.yaml... COMPLETED
+Assert that id: bannerImage is visible... COMPLETED
+Tap on id: closeBtn... COMPLETED
+Tap on "open_drawer"... COMPLETED
+Tap on "SUPER ZICHARGE"... COMPLETED
+Run flow when "PROCEED" is visible...
+  Assert that "PROCEED" is visible... COMPLETED
+  Tap on "PROCEED"... COMPLETED
+Run flow when "PROCEED" is visible... COMPLETED
+Run flow when "Home" is visible...
+  Assert that "Home" is visible... COMPLETED
+Run flow when "Home" is visible... COMPLETED
+Tap on id: adsLayout... COMPLETED
+Assert that "BACK" is visible... COMPLETED
+Assert that id: appLogo is visible... COMPLETED
+Assert that id: notificationIcon is visible... COMPLETED
+Assert that "My Ads" is visible... COMPLETED
+Assert that "How to create Ad" is visible... COMPLETED
+Assert that "Buy" is visible... COMPLETED
+Assert that "All" is visible... COMPLETED
+Assert that id: customEditTextEndImageView is visible... COMPLETED
+Assert that id: fabAddItem is visible... COMPLETED
+Assert that id: tvTimeDate is visible... COMPLETED
+Assert that id: tvCurrentStatus is visible... COMPLETED
+Assert that "Fee" is visible... COMPLETED
+Assert that id: tvFeeAmount is visible... COMPLETED
+Assert that "Payment window" is visible... COMPLETED
+Assert that id: tvPaymentWindowTime is visible... COMPLETED
+Assert that id: tvPaymentMethod is visible... COMPLETED
+Assert that id: tvTotalAmount is visible... COMPLETED
+Scroll vertically... COMPLETED
+Scroll vertically... COMPLETED
+Swipe from (50%,30%) to (50%,80%) in 400 ms... COMPLETED
+Tap on id: customEditText... COMPLETED
+Assert that id: appLogo is visible... COMPLETED
+Assert that "SELECT" is visible... COMPLETED
+Assert that "All" is visible... COMPLETED
+Assert that "Active" is visible... COMPLETED
+Assert that "Hold" is visible... COMPLETED
+Assert that "Processing" is visible... COMPLETED
+Assert that "Payment Request" is visible... COMPLETED
+Assert that "Dispute Request" is visible... COMPLETED
+Tap on "Dispute Request"... COMPLETED
+Tap on id: fabAddItem... COMPLETED
+Assert that "Create Buy Ads" is visible... COMPLETED
+Assert that "Sell balance by creating a buy add for ZiCharge personal users to purchase." is visible... COMPLETED
+Assert that "Enter ads amount" is visible... COMPLETED
+Assert that id: customEditTextStartLayout is visible... COMPLETED
+Tap on id: customEditText, Index: 1... COMPLETED
+Input text 1000... COMPLETED
+Hide Keyboard... COMPLETED
+Assert that "Enter fee amount (as default 0)" is visible... COMPLETED
+Tap on "Enter fee amount"... COMPLETED
+Input text 10... COMPLETED
+Hide Keyboard... COMPLETED
+Assert that "Payment Methods" is visible... COMPLETED
+Assert that "Select" is visible... COMPLETED
+Tap on "Select"... COMPLETED
+Assert that id: appLogo is visible... COMPLETED
+Assert that "SELECT" is visible... COMPLETED
+Assert that "Please choose" is visible... COMPLETED
+Assert that "Rocket - (827288282828282)" is visible... COMPLETED
+Assert that id: checkBox is visible... COMPLETED
+Tap on "Rocket - (827288282828282)"... COMPLETED
+Run flow when "SUBMIT" is visible...
+  Assert that "SUBMIT" is visible... COMPLETED
+  Tap on "SUBMIT"... COMPLETED
+Run flow when "SUBMIT" is visible... COMPLETED
+Assert that "Total Ads Amount" is visible... COMPLETED
+Assert that "1,010 IQD" is visible... COMPLETED
+Run flow when "CREATE" is visible...
+  Assert that "CREATE" is visible... COMPLETED
+  Tap on "CREATE"... COMPLETED
+Run flow when "CREATE" is visible... COMPLETED
+Assert that id: dialogImage is visible... COMPLETED
+Assert that "Congratulations!" is visible... COMPLETED
+Assert that "Your ad has been created
+successfully." is visible... COMPLETED
+Run flow when "OK" is visible...
+  Assert that "OK" is visible... COMPLETED
+  Tap on "OK"... COMPLETED
+Run flow when "OK" is visible... COMPLETED
+Assert that "Active" is visible... COMPLETED
+Assert that "Cancel Ad" is visible... COMPLETED
+Tap on "Cancel Ad"... COMPLETED
+Assert that id: dialogImage is visible... COMPLETED
+Assert that "Cancel This Ad?" is visible... COMPLETED
+Assert that "This ad will be canceled and can not be activated again" is visible... COMPLETED
+Run flow when "CONFIRM" is visible...
+  Assert that "CONFIRM" is visible... COMPLETED
+  Tap on "CONFIRM"... COMPLETED
+Run flow when "CONFIRM" is visible... COMPLETED
+Assert that "Cancelled" is visible... COMPLETED
+Run ../../flows/teardown.yaml...
+  Stop com.newroztech.gamewallet... COMPLETED
+Run ../../flows/teardown.yaml... COMPLETED
+
+=== sell_test_validation ===
+Running on ZA2233WW3N
+ &gt; Flow sell_test_validation
+Launch app "com.newroztech.gamewallet"... COMPLETED
+Run ../../flows/login_helper.yaml...
+  Tap on "Your Phone number here"... COMPLETED
+  Erase 10 characters... COMPLETED
+  Input text ${Mobile_Number}... COMPLETED
+  Tap on "Password"... COMPLETED
+  Input text ${Password}... COMPLETED
+  Tap on id: customEditTextEndImageView, Index: 1... COMPLETED
+  Assert that "Forgot Password" is visible... COMPLETED
+  Assert that "You don't have account yet?" is visible... COMPLETED
+  Assert that "CREATE NEW ACCOUNT" is visible... COMPLETED
+  Tap on "LOGIN"... COMPLETED
+  Wait for animation to end... COMPLETED
+Run ../../flows/login_helper.yaml... COMPLETED
+Assert that id: bannerImage is visible... COMPLETED
+Tap on id: closeBtn... COMPLETED
+Tap on "open_drawer"... COMPLETED
+Tap on "SUPER ZICHARGE"... COMPLETED
+Run flow when "PROCEED" is visible...
+  Assert that "PROCEED" is visible... COMPLETED
+  Tap on "PROCEED"... COMPLETED
+Run flow when "PROCEED" is visible... COMPLETED
+Run flow when "Home" is visible...
+  Assert that "Home" is visible... COMPLETED
+Run flow when "Home" is visible... COMPLETED
+Tap on id: adsLayout... COMPLETED
+Tap on id: adsSellLayout... COMPLETED
+Assert that "My Ads" is visible... COMPLETED
+Assert that "How to create Ad" is visible... COMPLETED
+Assert that "Sell" is visible... COMPLETED
+Assert that "All" is visible... COMPLETED
+Assert that id: customEditTextEndImageView is visible... COMPLETED
+Assert that id: tvTimeDate is visible... COMPLETED
+Assert that id: tvCurrentStatus is visible... COMPLETED
+Assert that "Fee" is visible... COMPLETED
+Assert that id: tvFeeAmount is visible... COMPLETED
+Assert that "Payment window" is visible... COMPLETED
+Assert that id: tvPaymentWindowTime is visible... COMPLETED
+Assert that id: tvPaymentMethod is visible... COMPLETED
+Assert that id: tvTotalAmount is visible... COMPLETED
+Tap on id: customEditText... COMPLETED
+Assert that "SELECT" is visible... COMPLETED
+Assert that "All" is visible... COMPLETED
+Assert that "Active" is visible... COMPLETED
+Assert that "Hold" is visible... COMPLETED
+Assert that "Processing" is visible... COMPLETED
+Assert that "Payment Request" is visible... COMPLETED
+Assert that "Dispute Request" is visible... COMPLETED
+Tap on "Active"... COMPLETED
+Assert that "Active" is visible... COMPLETED
+Run flow when "No Ads data found" is visible...
+  Assert that "No Ads data found" is visible... COMPLETED
+  Assert that "You haven't added anything yet!" is visible... COMPLETED
+Run flow when "No Ads data found" is visible... COMPLETED
+Assert that id: fabAddItem is visible... COMPLETED
+Tap on id: fabAddItem... COMPLETED
+Assert that id: appLogo is visible... COMPLETED
+Assert that id: notificationIcon is visible... COMPLETED
+Assert that "Create Sell Ads" is visible... COMPLETED
+Assert that "Buy balance by creating a sell add for ZiCharge personal users to release." is visible... COMPLETED
+Assert that "Enter ads amount" is visible... COMPLETED
+Tap on "Enter amount"... COMPLETED
+Input text 500... COMPLETED
+Hide Keyboard... COMPLETED
+Assert that "Enter fee amount (as default 0)" is visible... COMPLETED
+Assert that "Enter fee amount" is visible... COMPLETED
+Tap on "Enter fee amount"... COMPLETED
+Input text 10... COMPLETED
+Hide Keyboard... COMPLETED
+Assert that "Payment Methods" is visible... COMPLETED
+Assert that "Select" is visible... COMPLETED
+Tap on "Select"... COMPLETED
+Assert that "SELECT" is visible... COMPLETED
+Assert that "Please choose" is visible... COMPLETED
+Assert that id: checkBox is visible... COMPLETED
+Assert that "Rocket - (827288282828282)" is visible... COMPLETED
+Tap on "Rocket - (827288282828282)"... COMPLETED
+Run flow when "SUBMIT" is visible...
+  Assert that "SUBMIT" is visible... COMPLETED
+  Tap on "SUBMIT"... COMPLETED
+Run flow when "SUBMIT" is visible... COMPLETED
+Assert that "Total Ads Amount" is visible... COMPLETED
+Assert that "510 IQD" is visible... COMPLETED
+Run flow when "CREATE" is visible...
+  Assert that "CREATE" is visible... COMPLETED
+  Tap on "CREATE"... COMPLETED
+Run flow when "CREATE" is visible... COMPLETED
+Assert that id: dialogImage is visible... COMPLETED
+Assert that "Congratulations!" is visible... COMPLETED
+Assert that "Your ad has been created
+successfully." is visible... COMPLETED
+Tap on "OK"... COMPLETED
+Assert that id: tvActive is visible... COMPLETED
+Assert that "Cancel Ad" is visible... COMPLETED
+Tap on "Cancel Ad"... COMPLETED
+Assert that id: dialogImage is visible... COMPLETED
+Assert that "Cancel This Ad?" is visible... COMPLETED
+Assert that "This ad will be canceled and can not be activated again" is visible... COMPLETED
+Run flow when "CONFIRM" is visible...
+  Assert that "CONFIRM" is visible... COMPLETED
+  Tap on "CONFIRM"... COMPLETED
+Run flow when "CONFIRM" is visible... COMPLETED
+Assert that "Cancelled" is visible... COMPLETED
+Run ../../flows/teardown.yaml...
+  Stop com.newroztech.gamewallet... COMPLETED
+Run ../../flows/teardown.yaml... COMPLETED
+
+=== internal_transfer ===
+Running on ZA2233WW3N
+ &gt; Flow internal_transfer
+Launch app "com.newroztech.gamewallet"... COMPLETED
+Run ../../flows/login_helper.yaml...
+  Tap on "Your Phone number here"... COMPLETED
+  Erase 10 characters... COMPLETED
+  Input text ${Mobile_Number}... COMPLETED
+  Tap on "Password"... COMPLETED
+  Input text ${Password}... COMPLETED
+  Tap on id: customEditTextEndImageView, Index: 1... COMPLETED
+  Assert that "Forgot Password" is visible... COMPLETED
+  Assert that "You don't have account yet?" is visible... COMPLETED
+  Assert that "CREATE NEW ACCOUNT" is visible... COMPLETED
+  Tap on "LOGIN"... COMPLETED
+  Wait for animation to end... COMPLETED
+Run ../../flows/login_helper.yaml... COMPLETED
+Assert that id: bannerImage is visible... COMPLETED
+Tap on id: closeBtn... COMPLETED
+Tap on "open_drawer"... COMPLETED
+Tap on "SUPER ZICHARGE"... COMPLETED
+Run flow when "PROCEED" is visible...
+  Assert that "PROCEED" is visible... COMPLETED
+  Tap on "PROCEED"... COMPLETED
+Run flow when "PROCEED" is visible... COMPLETED
+Run flow when "Home" is visible...
+  Assert that "Home" is visible... COMPLETED
+Run flow when "Home" is visible... COMPLETED
+Assert that "BACK" is visible... COMPLETED
+Assert that id: appLogo is visible... COMPLETED
+Assert that id: notificationIcon is visible... COMPLETED
+Assert that "Add Balance" is visible... COMPLETED
+Tap on id: addBalanceLayout... COMPLETED
+Assert that id: getwayIconImageView is visible... COMPLETED
+Assert that "Internal Transfer" is visible... COMPLETED
+Assert that "Balance can be added from your personal account to Super Zicharge." is visible... COMPLETED
+Assert that "Internal Transfer Mobile Number" is visible... COMPLETED
+Assert that "+9641617539764" is visible... COMPLETED
+Tap on id: customEditText... COMPLETED
+Input text 500... COMPLETED
+Assert that id: tvAvailableBalance is visible... COMPLETED
+Assert that "Enter Amount" is visible... COMPLETED
+Assert that "Amount to add (Super ZiCharge)" is visible... COMPLETED
+Tap on "Amount to add (Super ZiCharge)"... COMPLETED
+Input text 500... COMPLETED
+Hide Keyboard... COMPLETED
+Run flow when "DEPOSIT" is visible...
+  Assert that "DEPOSIT" is visible... COMPLETED
+  Tap on "DEPOSIT"... COMPLETED
+Run flow when "DEPOSIT" is visible... COMPLETED
+Assert that id: dialogCardView is visible... COMPLETED
+Assert that "Send Confirmation" is visible... COMPLETED
+Assert that "Your deposit request of IQD 500 is processing." is visible... COMPLETED
+Assert that "CANCEL" is visible... COMPLETED
+Run flow when "CANCEL" is visible...
+  Assert that "CANCEL" is visible... COMPLETED
+  Tap on "CANCEL"... COMPLETED
+Run flow when "CANCEL" is visible... COMPLETED
+Run flow when "DEPOSIT" is visible...
+  Assert that "DEPOSIT" is visible... COMPLETED
+  Tap on "DEPOSIT"... COMPLETED
+Run flow when "DEPOSIT" is visible... COMPLETED
+Assert that "YES, CONFIRM" is visible... COMPLETED
+Run flow when "YES, CONFIRM" is visible...
+  Assert that "YES, CONFIRM" is visible... COMPLETED
+  Tap on "YES, CONFIRM"... COMPLETED
+Run flow when "YES, CONFIRM" is visible... COMPLETED
+Run ../../flows/enter_your_pin.yaml...
+  Assert that id: appLogo is visible... COMPLETED
+  Assert that "ENTER YOUR ACCOUNT PIN" is visible... COMPLETED
+  Assert that "You need to enter your account PIN number here to confirm the transaction process." is visible... COMPLETED
+  Assert that "Enter PIN" is visible... COMPLETED
+  Tap on "Enter PIN"... COMPLETED
+  Input text 1245... COMPLETED
+  Run flow when "CONFIRM" is visible...
+    Assert that "CONFIRM" is visible... COMPLETED
+    Tap on "CONFIRM"... COMPLETED
+  Run flow when "CONFIRM" is visible... COMPLETED
+Run ../../flows/enter_your_pin.yaml... COMPLETED
+Assert that id: appLogo is visible... COMPLETED
+Assert that id: statusIcon is visible... COMPLETED
+Assert that "Congratulations!" is visible... COMPLETED
+Assert that "Your balance has been successfully added to your account." is visible... COMPLETED
+Take screenshot ../../screenshots/Internal money transfer balance successfull... COMPLETED
+Run flow when "GO HOME" is visible...
+  Assert that "GO HOME" is visible... COMPLETED
+  Tap on "GO HOME"... COMPLETED
+Run flow when "GO HOME" is visible... COMPLETED
+Run flow when "HOME" is visible...
+  Assert that "HOME" is visible... COMPLETED
+Run flow when "HOME" is visible... COMPLETED
+Run ../../flows/teardown.yaml...
+  Stop com.newroztech.gamewallet... COMPLETED
+Run ../../flows/teardown.yaml... COMPLETED
+
+=== crypto ===
+Running on ZA2233WW3N
+ &gt; Flow crypto
+Launch app "com.newroztech.gamewallet"... COMPLETED
+Run ../../flows/login_helper.yaml...
+  Tap on "Your Phone number here"... COMPLETED
+  Erase 10 characters... COMPLETED
+  Input text ${Mobile_Number}... COMPLETED
+  Tap on "Password"... COMPLETED
+  Input text ${Password}... COMPLETED
+  Tap on id: customEditTextEndImageView, Index: 1... COMPLETED
+  Assert that "Forgot Password" is visible... COMPLETED
+  Assert that "You don't have account yet?" is visible... COMPLETED
+  Assert that "CREATE NEW ACCOUNT" is visible... COMPLETED
+  Tap on "LOGIN"... COMPLETED
+  Wait for animation to end... COMPLETED
+Run ../../flows/login_helper.yaml... COMPLETED
+Assert that id: bannerImage is visible... COMPLETED
+Tap on id: closeBtn... COMPLETED
+Tap on "open_drawer"... COMPLETED
+Tap on "SUPER ZICHARGE"... COMPLETED
+Run flow when "PROCEED" is visible...
+  Assert that "PROCEED" is visible... COMPLETED
+  Tap on "PROCEED"... COMPLETED
+Run flow when "PROCEED" is visible... COMPLETED
+Run flow when "Home" is visible...
+  Assert that "Home" is visible... COMPLETED
+Run flow when "Home" is visible... COMPLETED
+Tap on id: addBalanceLayout... COMPLETED
+Tap on id: adapterLayout... COMPLETED
+Assert that id: getwayIconImageView is visible... COMPLETED
+Assert that "Crypto" is visible... COMPLETED
+Tap on "Crypto"... COMPLETED
+Assert that id: customEditTextStartImageView is visible... COMPLETED
+Assert that "Currency" is visible... COMPLETED
+Assert that id: customEditTextEndImageView is visible... COMPLETED
+Tap on "Currency"... COMPLETED
+Assert that "CURRENCY LIST" is visible... COMPLETED
+Assert that "Please select cryptocurrencies from below list." is visible... COMPLETED
+Assert that id: customEditTextStartImageView is visible... COMPLETED
+Assert that "Search" is visible... COMPLETED
+Run random.js... COMPLETED
+Scrolling DOWN until "${output.selectedCurrency}" is visible with speed 40, visibility percentage 100%, timeout 20000 ms, with centering disabled... COMPLETED
+Tap on "${output.selectedCurrency}"... COMPLETED
+Assert that id: customEditTextStartImageView is visible... COMPLETED
+Assert that "Please select Network" is visible... COMPLETED
+Assert that "Network" is visible... COMPLETED
+Tap on "Network"... COMPLETED
+Assert that id: content is visible... COMPLETED
+Tap on id: content... COMPLETED
+Assert that id: customEditTextStartLayout is visible... COMPLETED
+Assert that "Amount" is visible... COMPLETED
+Assert that "Please enter amount in IQD to Deposit" is visible... COMPLETED
+Tap on "Amount"... COMPLETED
+Input text 250... COMPLETED
+Hide Keyboard... COMPLETED
+Run flow when "DEPOSIT" is visible...
+  Assert that "DEPOSIT" is visible... COMPLETED
+  Tap on "DEPOSIT"... COMPLETED
+Run flow when "DEPOSIT" is visible... COMPLETED
+Assert that "IQD Amount" is visible... COMPLETED
+Assert that "250" is visible... COMPLETED
+Assert that "Deposit Crypto Balance:" is visible... COMPLETED
+Assert that "Please transfer Crypto Balance to below address" is visible... COMPLETED
+Assert that "Receiver wallet address" is visible... COMPLETED
+Assert that id: receiverWalletAddressLayout is visible... COMPLETED
+Assert that "COPY" is visible... COMPLETED
+Tap on "COPY"... COMPLETED
+Assert that "* Click on the copy button if you unable to scan QR code" is visible... COMPLETED
+Assert that "Address is valid for 60 minutes" is visible... COMPLETED
+Assert that id: qrCodeImage is visible... COMPLETED
+Assert that "QR Code" is visible... COMPLETED
+Assert that  is visible... COMPLETED
+Assert that id: qrCode is visible... COMPLETED
+Run flow when "REQUEST HISTORY" is visible...
+  Assert that "REQUEST HISTORY" is visible... COMPLETED
+  Tap on "REQUEST HISTORY"... COMPLETED
+Run flow when "REQUEST HISTORY" is visible... COMPLETED
+Assert that  is visible... COMPLETED
+Run ../../flows/teardown.yaml...
+  Stop com.newroztech.gamewallet... COMPLETED
+Run ../../flows/teardown.yaml... COMPLETED
+
+=== transaction_history ===
+Running on ZA2233WW3N
+ &gt; Flow transaction_history
+Launch app "com.newroztech.gamewallet"... COMPLETED
+Run ../../flows/login_helper.yaml...
+  Tap on "Your Phone number here"... COMPLETED
+  Erase 10 characters... COMPLETED
+  Input text ${Mobile_Number}... COMPLETED
+  Tap on "Password"... COMPLETED
+  Input text ${Password}... COMPLETED
+  Tap on id: customEditTextEndImageView, Index: 1... COMPLETED
+  Assert that "Forgot Password" is visible... COMPLETED
+  Assert that "You don't have account yet?" is visible... COMPLETED
+  Assert that "CREATE NEW ACCOUNT" is visible... COMPLETED
+  Tap on "LOGIN"... COMPLETED
+  Wait for animation to end... COMPLETED
+Run ../../flows/login_helper.yaml... COMPLETED
+Assert that id: bannerImage is visible... COMPLETED
+Tap on id: closeBtn... COMPLETED
+Tap on "open_drawer"... COMPLETED
+Tap on "SUPER ZICHARGE"... COMPLETED
+Run flow when "PROCEED" is visible...
+  Assert that "PROCEED" is visible... COMPLETED
+  Tap on "PROCEED"... COMPLETED
+Run flow when "PROCEED" is visible... COMPLETED
+Run flow when "Home" is visible...
+  Assert that "Home" is visible... COMPLETED
+Run flow when "Home" is visible... COMPLETED
+Assert that id: transactionHistoryImageView is visible... COMPLETED
+Assert that "Transactions
+History" is visible... COMPLETED
+Tap on id: transactionHistoryLayout... COMPLETED
+Assert that id: appLogo is visible... COMPLETED
+Assert that id: notificationIcon is visible... COMPLETED
+Assert that "TRANSACTIONS
+HISTORY" is visible... COMPLETED
+Assert that  is visible... COMPLETED
+Scrolling DOWN until "P2P Transfer" is visible with speed 40, visibility percentage 100%, timeout 20000 ms, with centering disabled... COMPLETED
+Scrolling DOWN until "Fardin Faruk" is visible with speed 40, visibility percentage 100%, timeout 20000 ms, with centering disabled... COMPLETED
+Scroll vertically... COMPLETED
+Scroll vertically... COMPLETED
+Run ../../flows/teardown.yaml...
+  Stop com.newroztech.gamewallet... COMPLETED
+Run ../../flows/teardown.yaml... COMPLETED
+
+=== get_support ===
+Running on ZA2233WW3N
+ &gt; Flow get_support
+Launch app "com.newroztech.gamewallet"... COMPLETED
+Run ../../flows/login_helper.yaml...
+  Tap on "Your Phone number here"... COMPLETED
+  Erase 10 characters... COMPLETED
+  Input text ${Mobile_Number}... COMPLETED
+  Tap on "Password"... COMPLETED
+  Input text ${Password}... COMPLETED
+  Tap on id: customEditTextEndImageView, Index: 1... COMPLETED
+  Assert that "Forgot Password" is visible... COMPLETED
+  Assert that "You don't have account yet?" is visible... COMPLETED
+  Assert that "CREATE NEW ACCOUNT" is visible... COMPLETED
+  Tap on "LOGIN"... COMPLETED
+  Wait for animation to end... COMPLETED
+Run ../../flows/login_helper.yaml... COMPLETED
+Assert that id: bannerImage is visible... COMPLETED
+Tap on id: closeBtn... COMPLETED
+Tap on "open_drawer"... COMPLETED
+Tap on "SUPER ZICHARGE"... COMPLETED
+Run flow when "PROCEED" is visible...
+  Assert that "PROCEED" is visible... COMPLETED
+  Tap on "PROCEED"... COMPLETED
+Run flow when "PROCEED" is visible... COMPLETED
+Run flow when "Home" is visible...
+  Assert that "Home" is visible... COMPLETED
+Run flow when "Home" is visible... COMPLETED
+Assert that id: supportImageView is visible... COMPLETED
+Assert that "Get Support" is visible... COMPLETED
+Tap on id: supportLayout... COMPLETED
+Assert that id: appLogo is visible... COMPLETED
+Assert that "LIVE CHAT" is visible... COMPLETED
+Assert that "ZiDesk" is visible... COMPLETED
+Assert that "Online" is visible... COMPLETED
+Assert that "سڵاو، بەخێربێیت بۆ پاڵپشتی زیچارج. تکایە کێشەکەت یان پرسیارەکەت بنووسە." is visible... COMPLETED
+Assert that "مرحباً بك في دعم زيجارج. يرجى طرح مشكلتك أو سؤالك." is visible... COMPLETED
+Assert that "Welcome to Zicharge Support. Please state your issue or question." is visible... COMPLETED
+Assert that "Type your message..." is visible... COMPLETED
+Assert that "Attach file" is visible... COMPLETED
+Assert that id: babylon-chat-send is visible... COMPLETED
+Tap on "Type your message..."... COMPLETED
+Input text Trade... COMPLETED
+Tap on id: babylon-chat-send... COMPLETED
+Tap on "BACK"... COMPLETED
+Run ../../flows/teardown.yaml...
+  Stop com.newroztech.gamewallet... COMPLETED
+Run ../../flows/teardown.yaml... COMPLETED
+
+=== pending ===
+Running on ZA2233WW3N
+ &gt; Flow pending
+Launch app "com.newroztech.gamewallet"... COMPLETED
+Run ../../flows/login_helper.yaml...
+  Tap on "Your Phone number here"... COMPLETED
+  Erase 10 characters... COMPLETED
+  Input text ${Mobile_Number}... COMPLETED
+  Tap on "Password"... COMPLETED
+  Input text ${Password}... COMPLETED
+  Tap on id: customEditTextEndImageView, Index: 1... COMPLETED
+  Assert that "Forgot Password" is visible... COMPLETED
+  Assert that "You don't have account yet?" is visible... COMPLETED
+  Assert that "CREATE NEW ACCOUNT" is visible... COMPLETED
+  Tap on "LOGIN"... COMPLETED
+  Wait for animation to end... COMPLETED
+Run ../../flows/login_helper.yaml... COMPLETED
+Assert that id: bannerImage is visible... COMPLETED
+Tap on id: closeBtn... COMPLETED
+Tap on "open_drawer"... COMPLETED
+Tap on "SUPER ZICHARGE"... COMPLETED
+Run flow when "PROCEED" is visible...
+  Assert that "PROCEED" is visible... COMPLETED
+  Tap on "PROCEED"... COMPLETED
+Run flow when "PROCEED" is visible... COMPLETED
+Run flow when "Home" is visible...
+  Assert that "Home" is visible... COMPLETED
+Run flow when "Home" is visible... COMPLETED
+Assert that id: iv_orders is visible... COMPLETED
+Assert that "Orders" is visible... COMPLETED
+Tap on "Orders"... COMPLETED
+Assert that "Pending" is visible... COMPLETED
+Assert that "Orders" is visible... COMPLETED
+Assert that "How to accept order" is visible... COMPLETED
+Assert that id: notificationIcon is visible... COMPLETED
+Assert that "Done" is visible... COMPLETED
+Assert that "All" is visible... COMPLETED
+Tap on "All"... COMPLETED
+Assert that id: appLogo is visible... COMPLETED
+Assert that "ORDER FILTER" is visible... COMPLETED
+Assert that "Please choose" is visible... COMPLETED
+Assert that "All" is visible... COMPLETED
+Assert that "Initiated" is visible... COMPLETED
+Assert that "Confirmed" is visible... COMPLETED
+Assert that "Paid" is visible... COMPLETED
+Assert that "Disputed" is visible... COMPLETED
+Hide Keyboard... COMPLETED
+Assert that  is visible... COMPLETED
+Assert that id: chatBtn is visible... COMPLETED
+Scrolling DOWN until "QA NewrozTech" is visible with speed 40, visibility percentage 100%, timeout 50000 ms, with centering enabled... COMPLETED
+Run ../../flows/teardown.yaml...
+  Stop com.newroztech.gamewallet... COMPLETED
+Run ../../flows/teardown.yaml... COMPLETED</pre>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+  const total  = 9;
+  const passed = 9;
+  const failed = 0;
+  const skipped = 0;
+
+  // Percentages
+  const pPass = total > 0 ? ((passed  / total) * 100).toFixed(1) : 0;
+  const pFail = total > 0 ? ((failed  / total) * 100).toFixed(1) : 0;
+  const pSkip = total > 0 ? ((skipped / total) * 100).toFixed(1) : 0;
+
+  document.getElementById('pct-pass').textContent = pPass + '%';
+  document.getElementById('pct-fail').textContent = pFail + '%';
+  document.getElementById('pct-skip').textContent = pSkip + '%';
+
+  const data = [passed, failed, skipped];
+  const allZero = data.every(v => v === 0);
+
+  new Chart(document.getElementById('pieChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Passed', 'Failed', 'Skipped'],
+      datasets: [{
+        data: allZero ? [1, 0, 0] : data,
+        backgroundColor: ['#22c55e', '#ef4444', '#f59e0b'],
+        borderColor: '#111827',
+        borderWidth: 3,
+        hoverOffset: 8
+      }]
+    },
+    options: {
+      cutout: '72%',
+      plugins: { legend: { display: false }, tooltip: {
+        callbacks: {
+          label: ctx => {
+            const val = data[ctx.dataIndex];
+            const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+            return ' ' + ctx.label + ': ' + val + '  (' + pct + '%)';
+          }
+        }
+      }},
+      animation: { animateRotate: true, duration: 900 }
+    }
+  });
+</script>
+</body>
+</html>
